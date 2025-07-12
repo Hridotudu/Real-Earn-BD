@@ -242,6 +242,8 @@
     <div id="withdraw" class="section">
       <div class="card">
         <h3>Withdraw</h3>
+        <p>Minimum Withdraw: <strong id="minWithdraw">$0.50</strong></p>
+        <p>Maximum Withdraw: <strong id="maxWithdraw">$2.00</strong></p>
         <input id="withdrawAmount" type="text" placeholder="Enter Amount">
         <input id="withdrawMethod" type="text" placeholder="Payment Method or Account">
         <button class="btn" onclick="submitWithdraw()">Submit Request</button>
@@ -282,6 +284,9 @@
   // Telegram Bot Credentials (Replace with your actual bot token and chat ID)
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I';
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
+
+  const MIN_WITHDRAW = 0.50; // Minimum withdrawal amount
+  const MAX_WITHDRAW = 2.00; // Maximum withdrawal amount
 
   let currentUser = null; // Stores the currently logged-in user's name
   let users = JSON.parse(localStorage.getItem('users')) || {}; // Stores all user data from localStorage
@@ -542,8 +547,28 @@
     const amount = parseFloat(document.getElementById("withdrawAmount").value);
     const method = document.getElementById("withdrawMethod").value;
 
-    if (!amount || !method || amount > users[currentUser].balance || amount <= 0) {
-      alert("Please fill all fields correctly, and ensure the amount is valid and less than or equal to your balance.");
+    if (isNaN(amount) || !method) {
+      alert("Please fill all fields correctly.");
+      return;
+    }
+
+    if (amount <= 0) {
+      alert("Withdrawal amount must be greater than zero.");
+      return;
+    }
+
+    if (amount < MIN_WITHDRAW) {
+      alert(`Minimum withdrawal amount is $${MIN_WITHDRAW.toFixed(2)}.`);
+      return;
+    }
+
+    if (amount > MAX_WITHDRAW) {
+      alert(`Maximum withdrawal amount is $${MAX_WITHDRAW.toFixed(2)}.`);
+      return;
+    }
+
+    if (amount > users[currentUser].balance) {
+      alert("Insufficient balance for this withdrawal amount.");
       return;
     }
 
