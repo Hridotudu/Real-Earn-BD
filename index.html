@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>❤️Hridoy Skill❤️</title>
+  <style>
+    /* Global Variables for Colors (Dark/Light Mode) */
+    :root {
+      --bg-color: #f0f2f5;
+      --text-color: #000;
+      --card-bg: #fff;
+      --header-bg: linear-gradient(90deg, #007bff, #00c6ff);
+      --button-bg: linear-gradient(45deg, #007bff, #00c6ff);
+      --link-color: #007bff;
+    }
+    /* Dark Mode Styles */
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #fff;
+      --card-bg: #1e1e1e;
+      --header-bg: linear-gradient(90deg, #333, #555);
+      --button-bg: linear-gradient(45deg, #444, #777);
+      --link-color: #00c6ff;
+    }
+
+    /* Base Body Styles */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding-bottom: 80px; /* Space for fixed navigation bar */
+      transition: background 0.3s, color 0.3s; /* Smooth transition for dark/light mode */
+      -webkit-font-smoothing: antialiased; /* Better font rendering on mobile */
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Header Styles */
+    header {
+      background: var(--header-bg);
+      color: white;
+      padding: 15px; /* Slightly reduced padding for mobile */
+      text-align: center;
+      font-size: 18px; /* Slightly reduced font size for mobile */
+      font-weight: bold;
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Added subtle shadow for depth */
+    }
+
+    /* Dark Mode Toggle Button */
+    .toggle-mode {
+      position: absolute;
+      top: 12px;
+      right: 15px; /* Adjusted right spacing */
+      font-size: 13px; /* Slightly smaller font */
+      background: #fff3; /* Semi-transparent white */
+      padding: 6px 10px; /* Adjusted padding */
+      border-radius: 20px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    }
+
+    /* Main Container for Content */
+    .container {
+      max-width: 500px; /* Max width for larger screens */
+      margin: auto; /* Center the container */
+      padding: 15px; /* Reduced overall padding for mobile */
+    }
+
+    /* Section Visibility (for tab switching) */
+    .section { display: none; }
+    .section.active { display: block; } /* Show active section */
+
+    /* Card Styles */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px; /* Slightly reduced margin between cards */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Soft shadow for cards */
+    }
+
+    /* Button Styles */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      background: var(--button-bg);
+      border: none;
+      border-radius: 30px; /* Rounded buttons */
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.2s ease; /* Smooth hover effect */
+      -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    }
+    .btn:hover { transform: scale(1.02); } /* Slight scale on hover */
+    .btn:active { transform: scale(0.98); } /* Slight scale on active (tap) */
+
+    /* Fixed Navigation Bar */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* Shadow above nav */
+      display: none; /* Hidden by default, shown after login */
+      z-index: 1000; /* Ensure nav is on top of other content */
+    }
+    nav button {
+      flex: 1; /* Equal width for all buttons */
+      padding: 12px;
+      border: none;
+      background: none;
+      font-weight: bold;
+      color: var(--text-color);
+      font-size: 15px; /* Slightly smaller font for nav items */
+      -webkit-tap-highlight-color: transparent;
+    }
+    nav button:active { background: rgba(0,0,0,0.05); } /* Light background on active */
+
+    /* Info/Status Messages */
+    .info {
+      font-weight: bold;
+      color: green;
+      margin-top: 10px;
+      font-size: 14px; /* Slightly smaller font for info text */
+      text-align: center; /* Center align info messages */
+    }
+
+    /* Input Field Styles */
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px; /* Slightly smaller font for inputs */
+      box-sizing: border-box; /* Ensures padding doesn't increase width */
+      background: var(--bg-color); /* Input background adapts to dark/light mode */
+      color: var(--text-color); /* Input text color adapts to dark/light mode */
+    }
+    input[type="file"] {
+      padding: 8px; /* Smaller padding for file input */
+    }
+
+    /* Username Display in Dashboard */
+    #usernameDisplay {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--link-color); /* Matches header/button gradient start color */
+        margin-bottom: 15px;
+        text-align: center;
+        padding-top: 10px; /* Add some space above the text */
+    }
+    
+    /* Small Screen Adjustments (Optional, but good practice for very small phones) */
+    @media (max-width: 320px) {
+        header {
+            font-size: 16px;
+            padding: 12px;
+        }
+        .toggle-mode {
+            font-size: 12px;
+            padding: 5px 8px;
+        }
+        .btn {
+            font-size: 14px;
+            padding: 12px;
+        }
+        nav button {
+            font-size: 14px;
+            padding: 10px;
+        }
+        .card {
+            padding: 15px;
+        }
+    }
+  </style>
+</head>
+<body>
+<header>
+  Developer:Hridoy Skill
+  <span class="toggle-mode" onclick="toggleDarkMode()"> ☀️ </span>
+</header>
+
+<div class="container">
+  <div id="auth" class="section active">
+    <div class="card">
+      <h3>Welcome!</h3>
+      <p>Please enter your name to continue.</p>
+      <input type="text" id="usernameInput" placeholder="Enter your Name" required>
+      <button class="btn" onclick="registerOrLogin()">Enter Your Name</button>
+      <p style="margin-top: 10px; color: #888; text-align: center; font-size: 13px;">If you're new, your account will be created. If you've been here before, you'll be logged in.</p>
+    </div>
+  </div>
+
+  <div id="appSections" style="display: none;">
+    <p id="usernameDisplay"></p>
+    <div id="home" class="section">
+      <div class="card">
+        <h3>Dashboard</h3>
+        <p>Balance: <strong id="balance">$0.000</strong></p>
+        <p>Ads Watched: <strong id="adsWatched">0</strong></p>
+        <p>Tasks Completed: <strong id="tasksCompleted">0</strong></p>
+        <button class="btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div id="earn" class="section">
+      <div class="card">
+        <h3>Watch Ads</h3>
+        <button class="btn" onclick="watchAd()">Watch Ad & Earn</button>
+        <p class="info" id="ad-status">Click the button to watch ad</p>
+      </div>
+      <div class="card">
+        <h3>Tasks</h3>
+        <button class="btn" onclick="taskWithRedirect('https://t.me/Hridoy_Skill', 'Join Telegram')">Join Telegram</button>
+        <button class="btn" onclick="taskWithRedirect('https://youtube.com/@hridoy_skill_0.69?si=GfXezqZBlqsXYWVc', 'Subscribe YouTube')">Subscribe YouTube</button>
+        <button class="btn" onclick="taskWithRedirect('https://www.facebook.com/Hridoy.tudu.69', 'Like Facebook Page')">Like Facebook Page</button>
+        <button class="btn" onclick="taskWithRedirect('https://instagram.com', 'Follow Instagram')">Follow Instagram</button>
+        <button class="btn" onclick="taskWithRedirect('https://youtu.be/Nqg8N0_RY_g?si=QFzA-UZbj6YxkIF9', 'Share Post')">Share Post</button>
+
+        <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
+
+        <h4>Add Screenshots for Task Completion</h4>
+        <input type="text" id="screenshotName" placeholder="Enter Your Name (for verification)">
+        <input type="text" id="taskNameInput" placeholder="Enter Completed Task Name (e.g., Join Telegram)">
+        <input type="file" id="screenshotUpload" accept="image/*">
+        <button class="btn" onclick="submitScreenshot()">Submit Screenshot</button>
+        <p class="info" id="screenshot-status"></p>
+      </div>
+    </div>
+
+    <div id="withdraw" class="section">
+      <div class="card">
+        <h3>Withdraw</h3>
+        <input id="withdrawAmount" type="text" placeholder="Enter Amount">
+        <input id="withdrawMethod" type="text" placeholder="Payment Method or Account">
+        <button class="btn" onclick="submitWithdraw()">Submit Request</button>
+      </div>
+    </div>
+
+    <div id="contact" class="section">
+      <div class="card">
+        <h3>Contact</h3>
+        <button class="btn" onclick="window.open('https://t.me/Hridoy_Tudu')">Chat with Admin</button>
+        <button class="btn" onclick="window.open('https://t.me/Hridoy_Tudu')">Contact Owner</button>
+        <button class="btn" onclick="window.open('https://youtu.be/Nqg8N0_RY_g?si=QFzA-UZbj6YxkIF9')">Watch Help Video</button>
+      </div>
+    </div>
+
+    <div id="profile" class="section">
+      <div class="card">
+        <h3>Profile</h3>
+        <p>Total Ads: <strong id="adsWatchedProfile">0</strong></p>
+        <p>Total Tasks: <strong id="tasksCompletedProfile">0</strong></p>
+        <p>Total Withdraw: <strong id="withdrawTotal">$0.00</strong></p>
+        <p style="margin-top:10px;color:#888;">❤️Developer:Hridoy Skill❤️</p>
+      </div>
+    </div>
+  </div> </div>
+
+<nav>
+  <button onclick="showTab('home')">Home</button>
+  <button onclick="showTab('earn')">Earn</button>
+  <button onclick="showTab('withdraw')">Withdraw</button>
+  <button onclick="showTab('contact')">Contact</button>
+  <button onclick="showTab('profile')">Profile</button>
+</nav>
+
+<script src="//libtl.com/sdk.js" data-zone="9506403" data-sdk="show_9506403"></script>
+
+<script>
+  // Telegram Bot Credentials (Replace with your actual bot token and chat ID)
+  const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I';
+  const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
+
+  let currentUser = null; // Stores the currently logged-in user's name
+  let users = JSON.parse(localStorage.getItem('users')) || {}; // Stores all user data from localStorage
+
+  /**
+   * Saves the current user's data to the global 'users' object and then to localStorage.
+   */
+  function saveUserData() {
+    if (currentUser) {
+      // Update data for the current user
+      users[currentUser] = {
+        balance: parseFloat(document.getElementById('balance').innerText.replace('$', '')),
+        adsWatched: parseInt(document.getElementById('adsWatched').innerText),
+        tasksCompleted: parseInt(document.getElementById('tasksCompleted').innerText),
+        totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', ''))
+      };
+    }
+    // Save the entire users object to localStorage
+    localStorage.setItem('users', JSON.stringify(users));
+  }
+
+  /**
+   * Loads a specific user's data from the 'users' object and updates the UI.
+   * If the user is new, initializes with default values.
+   * @param {string} username - The username to load data for.
+   */
+  function loadUserData(username) {
+    if (users[username]) {
+      const userData = users[username];
+      document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
+      document.getElementById("adsWatched").innerText = userData.adsWatched;
+      document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
+      document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+    } else {
+      // Initialize new user with default values
+      document.getElementById("balance").innerText = `$0.000`;
+      document.getElementById("adsWatched").innerText = 0;
+      document.getElementById("tasksCompleted").innerText = 0;
+      document.getElementById("withdrawTotal").innerText = `$0.000`;
+    }
+    updateProfileStats(); // Also update the profile section's display
+  }
+
+  /**
+   * Handles user registration or login based on the entered username.
+   */
+  function registerOrLogin() {
+    const usernameInput = document.getElementById('usernameInput').value.trim();
+    if (usernameInput === "") {
+      alert("Please enter your name to proceed.");
+      return;
+    }
+
+    currentUser = usernameInput;
+    localStorage.setItem('loggedInUser', currentUser); // Store currently logged-in user for session persistence
+
+    // If the user does not exist in our 'users' object, create a new entry for them
+    if (!users[currentUser]) {
+      users[currentUser] = {
+        balance: 0.000,
+        adsWatched: 0,
+        tasksCompleted: 0,
+        totalWithdraw: 0.000
+      };
+    }
+
+    loadUserData(currentUser); // Load user-specific data into the UI
+    document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`; // Display welcome message
+    document.getElementById('auth').style.display = 'none'; // Hide the login/registration section
+    document.getElementById('appSections').style.display = 'block'; // Show the main application content
+    document.querySelector('nav').style.display = 'flex'; // Show the navigation bar
+    showTab('home'); // Automatically navigate to the Dashboard tab
+  }
+
+  /**
+   * Logs out the current user, saves their data, and returns to the login screen.
+   */
+  function logout() {
+    if (confirm("Are you sure you want to log out?")) {
+      saveUserData(); // Save current user's data before logging out
+      currentUser = null; // Clear current user
+      localStorage.removeItem('loggedInUser'); // Remove logged-in user from localStorage
+      document.getElementById('auth').style.display = 'block'; // Show login/registration section
+      document.getElementById('appSections').style.display = 'none'; // Hide main application content
+      document.querySelector('nav').style.display = 'none'; // Hide navigation bar
+      document.getElementById('usernameInput').value = ''; // Clear username input field
+      alert("You have been logged out successfully.");
+    }
+  }
+
+  /**
+   * Checks if a user was previously logged in on page load and restores the session.
+   */
+  function checkLoginStatus() {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    if (loggedInUser) {
+      currentUser = loggedInUser;
+      loadUserData(currentUser);
+      document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`;
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('appSections').style.display = 'block';
+      document.querySelector('nav').style.display = 'flex';
+      showTab('home'); // Go to dashboard if already logged in
+    } else {
+      document.getElementById('auth').style.display = 'block';
+      document.getElementById('appSections').style.display = 'none';
+      document.querySelector('nav').style.display = 'none';
+    }
+  }
+
+  /**
+   * Shows the selected tab and hides others.
+   * @param {string} tabId - The ID of the tab to show (e.g., 'home', 'earn').
+   */
+  function showTab(tabId) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    // Ensure the app sections are visible before showing a specific tab
+    if (document.getElementById('appSections').style.display === 'block') {
+      document.getElementById(tabId).classList.add('active');
+    }
+    updateProfileStats(); // Always update profile stats when changing tabs
+  }
+
+  /**
+   * Simulates watching an ad and awards balance.
+   * Integrates with an external ad SDK.
+   */
+  function watchAd() {
+    const status = document.getElementById("ad-status");
+    // Check if the external ad SDK function is available
+    if (typeof show_9506403 === "function") {
+      show_9506403(); // Call the external ad display function
+    } else {
+      alert("Ads not loaded. Please ensure you have an active internet connection or try refreshing the page.");
+      return;
+    }
+
+    let sec = 15; // Ad watch duration
+    status.innerText = `Please watch... ${sec}s`;
+    let timer = setInterval(() => {
+      sec--;
+      if (sec > 0) {
+        status.innerText = `Please watch... ${sec}s`;
+      } else {
+        clearInterval(timer);
+        users[currentUser].balance += 0.005; // Award earnings
+        users[currentUser].adsWatched++; // Increment ad count
+        updateStatsDisplay(); // Update UI display
+        status.innerText = `Earned $0.005!`;
+        saveUserData(); // Save updated user data
+      }
+    }, 1000);
+  }
+
+  /**
+   * Handles task completion with a redirect.
+   * Now, it only opens the URL and prompts the user to submit a screenshot.
+   * @param {string} url - The URL to redirect the user to for the task.
+   * @param {string} taskName - The name of the task being performed.
+   */
+  function taskWithRedirect(url, taskName) {
+    window.open(url, '_blank'); // Open URL in a new tab
+    alert(`Please complete the "${taskName}" task and then submit a screenshot in the section below.`);
+    document.getElementById('taskNameInput').value = taskName; // Pre-fill task name for convenience
+  }
+
+  /**
+   * Handles submitting a screenshot for task verification to Telegram.
+   */
+  async function submitScreenshot() {
+    const userNameInput = document.getElementById("screenshotName").value.trim();
+    const taskNameInput = document.getElementById("taskNameInput").value.trim(); // Get task name
+    const screenshotFile = document.getElementById("screenshotUpload").files;
+    const screenshotStatus = document.getElementById("screenshot-status");
+
+    if (!userNameInput || !taskNameInput || screenshotFile.length === 0) {
+      alert("Please enter your name for verification, the task name, and select a screenshot image.");
+      return;
+    }
+    // Ensure the name entered matches the logged-in user for verification
+    if (userNameInput !== currentUser) {
+        alert("The name entered for screenshot verification must match your logged-in username.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('chat_id', TELEGRAM_CHAT_ID);
+    formData.append('caption', `New task screenshot submitted:\nUser: ${currentUser}\nName on screenshot: ${userNameInput}\nTask Completed: ${taskNameInput}`);
+    formData.append('photo', screenshotFile[0]); // Upload only the first selected file
+
+    screenshotStatus.innerText = "Sending screenshot...";
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.ok) {
+        screenshotStatus.innerText = "Screenshot sent successfully! Waiting for verification...";
+        
+        // Simulate verification delay
+        let sec = 10; // seconds
+        let timer = setInterval(() => {
+          sec--;
+          if (sec > 0) {
+            screenshotStatus.innerText = `Verifying... ${sec}s`;
+          } else {
+            clearInterval(timer);
+            users[currentUser].balance += 0.005; // Award earnings after "verification"
+            users[currentUser].tasksCompleted++; // Increment task count
+            updateStatsDisplay(); // Update UI display
+            screenshotStatus.innerText = `Verification complete! $0.005 added to your balance for "${taskNameInput}".`;
+            // Clear input fields after successful submission and award
+            document.getElementById("screenshotName").value = '';
+            document.getElementById("taskNameInput").value = ''; // Clear task name input
+            document.getElementById("screenshotUpload").value = '';
+            saveUserData(); // Save updated user data
+          }
+        }, 1000);
+
+      } else {
+        screenshotStatus.innerText = "Failed to send screenshot. Please try again. Error: " + (result.description || "Unknown");
+        console.error("Telegram API error:", result);
+      }
+    } catch (error) {
+      console.error("Error submitting screenshot:", error);
+      screenshotStatus.innerText = "An error occurred while submitting the screenshot. Please check your internet connection.";
+    }
+  }
+
+  /**
+   * Updates the balance, ads watched, and tasks completed displays for the current user.
+   */
+  function updateStatsDisplay() {
+    const userData = users[currentUser];
+    document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
+    document.getElementById("adsWatched").innerText = userData.adsWatched;
+    document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
+    // Withdraw total is updated by updateProfileStats, which is called after this.
+    updateProfileStats(); // Ensure profile section is also updated
+  }
+
+  /**
+   * Updates the profile tab's specific statistics.
+   */
+  function updateProfileStats() {
+    const userData = users[currentUser];
+    document.getElementById("adsWatchedProfile").innerText = userData.adsWatched;
+    document.getElementById("tasksCompletedProfile").innerText = userData.tasksCompleted;
+    document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+  }
+
+  /**
+   * Handles user withdrawal requests, sends details to Telegram, and resets balance.
+   */
+  async function submitWithdraw() {
+    const amount = parseFloat(document.getElementById("withdrawAmount").value);
+    const method = document.getElementById("withdrawMethod").value;
+
+    if (!amount || !method || amount > users[currentUser].balance || amount <= 0) {
+      alert("Please fill all fields correctly, and ensure the amount is valid and less than or equal to your balance.");
+      return;
+    }
+
+    const message = `New Withdraw Request from user: ${currentUser}\nAmount: $${amount.toFixed(3)}\nPayment Method: ${method}\nBalance Before: $${users[currentUser].balance.toFixed(3)}`;
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
+      });
+
+      const result = await response.json();
+      if (result.ok) {
+        users[currentUser].balance = 0; // Reset balance after withdrawal request
+        users[currentUser].totalWithdraw += amount; // Add to total withdrawn amount
+        updateStatsDisplay(); // Update UI display
+        alert("Withdraw request sent successfully! Your balance has been reset to $0.000.");
+        // Clear withdraw input fields
+        document.getElementById("withdrawAmount").value = '';
+        document.getElementById("withdrawMethod").value = '';
+        saveUserData(); // Save updated user data
+      } else {
+        alert("Failed to send withdraw request. Please try again. Error: " + (result.description || "Unknown"));
+        console.error("Telegram API error:", result);
+      }
+    } catch (error) {
+      console.error("Error submitting withdraw request:", error);
+      alert("An error occurred while submitting the withdraw request. Please check your internet connection.");
+    }
+  }
+
+  /**
+   * Toggles dark mode on and off.
+   */
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+  }
+
+  // Event listener for when the page finishes loading
+  window.onload = checkLoginStatus;
+</script>
+</body>
+</html>
