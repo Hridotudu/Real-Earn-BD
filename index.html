@@ -139,7 +139,7 @@
     }
 
     /* Input Field Styles */
-    input[type="text"], input[type="file"] {
+    input[type="text"], input[type="file"], input[type="email"] {
       width: 100%;
       padding: 12px;
       margin-top: 10px;
@@ -292,8 +292,8 @@
   <div id="auth" class="section active">
     <div class="card">
       <h3>Welcome!</h3>
-      <p>Please enter your **10-digit Telegram User ID** to continue.</p>
-      <input type="text" id="telegramUidInput" placeholder="Enter your 10-digit Telegram User ID" required maxlength="10">
+      <p>Please enter your **Gmail address** to continue.</p>
+      <input type="email" id="gmailInput" placeholder="Enter your Gmail address" required>
       <button class="btn" onclick="registerOrLogin()">Continue</button>
       <p style="margin-top: 10px; color: #888; text-align: center; font-size: 13px;">If you're new, your account will be created. If you've been here before, you'll be logged in.</p>
     </div>
@@ -338,7 +338,7 @@
         <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
 
         <h4>Add Screenshots for Task Completion</h4>
-        <input type="text" id="screenshotName" placeholder="Enter Your 10-digit Telegram User ID (for verification)" maxlength="10">
+        <input type="email" id="screenshotName" placeholder="Enter Your Gmail address (for verification)">
         <input type="file" id="screenshotUpload" accept="image/*">
         <button class="btn" onclick="submitScreenshot()">Submit Screenshot</button>
         <p class="info" id="screenshot-status"></p>
@@ -405,10 +405,10 @@
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I';
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
 
-  let currentUser = null; // Stores the currently logged-in user's UID
+  let currentUser = null; // Stores the currently logged-in user's Gmail
   let users = JSON.parse(localStorage.getItem('users')) || {}; // Stores all user data from localStorage
 
-  // Add a new variable to store the potential referrer ID
+  // Add a new variable to store the potential referrer ID (now a Gmail address)
   let referrerId = null;
 
   // --- Add this function to parse URL parameters ---
@@ -443,11 +443,11 @@
   /**
    * Loads a specific user's data from the 'users' object and updates the UI.
    * If the user is new, initializes with default values.
-   * @param {string} uid - The Telegram UID to load data for.
+   * @param {string} email - The Gmail address to load data for.
    */
-  function loadUserData(uid) {
-    if (users[uid]) {
-      const userData = users[uid];
+  function loadUserData(email) {
+    if (users[email]) {
+      const userData = users[email];
       document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
       document.getElementById("adsWatched").innerText = userData.adsWatched;
       document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
@@ -460,11 +460,11 @@
       const twentyFourHours = 24 * 60 * 60 * 1000;
 
       if (now - lastReset >= twentyFourHours) {
-        users[uid].dailyAdsWatched = 0;
-        users[uid].lastAdResetDate = new Date().toISOString(); // Set new reset date
+        users[email].dailyAdsWatched = 0;
+        users[email].lastAdResetDate = new Date().toISOString(); // Set new reset date
       }
-      document.getElementById("dailyAdsWatched").innerText = users[uid].dailyAdsWatched;
-      document.getElementById("dailyAdsWatchedEarn").innerText = users[uid].dailyAdsWatched; // Update for earn section
+      document.getElementById("dailyAdsWatched").innerText = users[email].dailyAdsWatched;
+      document.getElementById("dailyAdsWatchedEarn").innerText = users[email].dailyAdsWatched; // Update for earn section
 
     } else {
       // This block is mostly redundant as new user initialization happens directly in registerOrLogin,
@@ -481,19 +481,28 @@
   }
 
   /**
-   * Handles user registration or login based on the entered Telegram UID.
-   * The Telegram UID now serves as the unique identifier (username).
+   * Validates if the input is a valid Gmail address.
+   * @param {string} email - The email string to validate.
+   * @returns {boolean} True if valid, false otherwise.
+   */
+  function isValidGmail(email) {
+      const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      return gmailRegex.test(email);
+  }
+
+  /**
+   * Handles user registration or login based on the entered Gmail address.
+   * The Gmail address now serves as the unique identifier (username).
    */
   function registerOrLogin() {
-    const telegramUidInput = document.getElementById('telegramUidInput').value.trim(); // Get Telegram UID
+    const gmailInput = document.getElementById('gmailInput').value.trim().toLowerCase(); // Get Gmail, convert to lowercase
 
-    // NEW: UID length and numeric validation
-    if (telegramUidInput === "" || telegramUidInput.length !== 10 || isNaN(telegramUidInput)) {
-      alert("Please enter a valid 10-digit Telegram User ID.");
+    if (!isValidGmail(gmailInput)) {
+      alert("Please enter a valid Gmail address (e.g., yourname@gmail.com) to proceed.");
       return;
     }
 
-    currentUser = telegramUidInput; // The UID is now the currentUser
+    currentUser = gmailInput; // The Gmail is now the currentUser
     localStorage.setItem('loggedInUser', currentUser); // Store currently logged-in user for session persistence
 
     // Check if the user is new
@@ -510,8 +519,8 @@
         referredUsers: []
       };
 
-      // If there's a referrer ID, assign it and award bonus
-      if (referrerId && referrerId !== currentUser && users[referrerId]) { // Ensure referrer exists and not self-referring
+      // If there's a referrer ID (Gmail), assign it and award bonus
+      if (referrerId && isValidGmail(referrerId) && referrerId !== currentUser && users[referrerId]) { // Ensure referrer exists and not self-referring
         users[currentUser].referredBy = referrerId; // Track who referred this new user
         users[referrerId].balance += 0.020; // Example: Referrer gets $0.020
         users[referrerId].totalReferrals++; // Increment referrer's total referrals
@@ -527,7 +536,7 @@
     }
 
     loadUserData(currentUser); // Load user-specific data into the UI
-    document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`; // Display welcome message (will show UID)
+    document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`; // Display welcome message (will show Gmail)
     document.getElementById('auth').style.display = 'none'; // Hide the login/registration section
     document.getElementById('appSections').style.display = 'block'; // Show the main application content
     document.querySelector('nav').style.display = 'flex'; // Show the navigation bar
@@ -545,7 +554,7 @@
       document.getElementById('auth').style.display = 'block'; // Show login/registration section
       document.getElementById('appSections').style.display = 'none'; // Hide main application content
       document.querySelector('nav').style.display = 'none'; // Hide navigation bar
-      document.getElementById('telegramUidInput').value = ''; // Clear Telegram UID input field
+      document.getElementById('gmailInput').value = ''; // Clear Gmail input field
       showFlashMessage("You have been logged out successfully.");
     }
   }
@@ -554,7 +563,7 @@
    * Checks if a user was previously logged in on page load and restores the session.
    */
   function checkLoginStatus() {
-    // Capture referrer ID from URL on initial load BEFORE login check
+    // Capture referrer ID (Gmail) from URL on initial load BEFORE login check
     referrerId = getUrlParameter('ref');
     if (referrerId) {
         console.log(`Potential referrer ID found in URL: ${referrerId}`);
@@ -564,7 +573,7 @@
     }
 
     const loggedInUser = localStorage.getItem('loggedInUser');
-    if (loggedInUser) {
+    if (loggedInUser && isValidGmail(loggedInUser)) { // Validate stored user is a Gmail
       currentUser = loggedInUser;
       loadUserData(currentUser);
       document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`;
@@ -652,11 +661,12 @@
   }
 
   /**
-   * Displays the referral modal with the user's unique Telegram referral link.
+   * Displays the referral modal with the user's unique Gmail referral link.
    */
   function showReferralLink() {
       if (currentUser) {
-          const referralLink = `https://t.me/RealEarnBD62_bot?startapp=ref_${currentUser}`;
+          // Changed referral link to use Gmail (encoded for URL safety)
+          const referralLink = `https://t.me/RealEarnBD62_bot?startapp=ref_${encodeURIComponent(currentUser)}`;
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex'; // Show modal
           document.getElementById('copyStatus').innerText = ''; // Clear previous status
@@ -699,23 +709,28 @@
    * Handles submitting a screenshot for task verification to Telegram.
    */
   async function submitScreenshot() {
-    const userIdForScreenshot = document.getElementById("screenshotName").value.trim(); // This should be the UID for verification
+    const userEmailForScreenshot = document.getElementById("screenshotName").value.trim().toLowerCase(); // This should be the Gmail for verification
     const screenshotFile = document.getElementById("screenshotUpload").files;
     const screenshotStatus = document.getElementById("screenshot-status");
 
-    if (!userIdForScreenshot || screenshotFile.length === 0) {
-      showFlashMessage("Please enter your Telegram User ID for verification and select a screenshot image.");
+    if (!userEmailForScreenshot || screenshotFile.length === 0) {
+      showFlashMessage("Please enter your Gmail address for verification and select a screenshot image.");
       return;
     }
-    // Ensure the UID entered matches the logged-in user's UID for verification
-    if (userIdForScreenshot !== currentUser) {
-        showFlashMessage("The User ID entered for screenshot verification must match your logged-in User ID.");
+    // Ensure the Gmail entered matches the logged-in user's Gmail for verification
+    if (userEmailForScreenshot !== currentUser) {
+        showFlashMessage("The Gmail address entered for screenshot verification must match your logged-in Gmail address.");
+        return;
+    }
+    if (!isValidGmail(userEmailForScreenshot)) {
+        showFlashMessage("Please enter a valid Gmail address for verification.");
         return;
     }
 
+
     const formData = new FormData();
     formData.append('chat_id', TELEGRAM_CHAT_ID);
-    formData.append('caption', `New task screenshot submitted:\nUser UID: ${currentUser}\nUID on screenshot: ${userIdForScreenshot}`);
+    formData.append('caption', `New task screenshot submitted:\nUser Gmail: ${currentUser}\nGmail on screenshot: ${userEmailForScreenshot}`);
     formData.append('photo', screenshotFile[0]); // Upload only the first selected file
 
     screenshotStatus.innerText = "Sending screenshot...";
