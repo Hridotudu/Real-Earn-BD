@@ -293,13 +293,13 @@
    * Saves the current user's data to the global 'users' object and then to localStorage.
    */
   function saveUserData() {
-    if (currentUser) {
+    if (currentUser && users[currentUser]) { // Ensure currentUser and its data exist
       // Update data for the current user
       users[currentUser] = {
         balance: parseFloat(document.getElementById('balance').innerText.replace('$', '')),
         adsWatched: parseInt(document.getElementById('adsWatched').innerText),
         dailyAdsWatched: parseInt(document.getElementById('dailyAdsWatched').innerText),
-        lastAdResetDate: users[currentUser].lastAdResetDate, // Keep the existing reset date
+        lastAdResetDate: users[currentUser].lastAdResetDate || new Date().toISOString(), // Fallback if not set
         tasksCompleted: parseInt(document.getElementById('tasksCompleted').innerText),
         totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', ''))
       };
@@ -368,6 +368,7 @@
         tasksCompleted: 0,
         totalWithdraw: 0.000
       };
+      saveUserData(); // Save the newly created user data immediately
     }
 
     loadUserData(currentUser); // Load user-specific data into the UI
@@ -627,7 +628,7 @@
         document.getElementById("withdrawMethod").value = '';
         saveUserData(); // Save updated user data
       } else {
-        alert("Failed to send withdraw request. Please try again. Error: " + (result.description || "Unknown");
+        alert("Failed to send withdraw request. Please try again. Error: " + (result.description || "Unknown"));
         console.error("Telegram API error:", result);
       }
     } catch (error) {
