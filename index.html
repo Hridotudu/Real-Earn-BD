@@ -1,4 +1,3 @@
-আপনার দেওয়া সম্পূর্ণ কোডটি ইংরেজিতে নিচে দেওয়া হলো:
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -293,10 +292,9 @@
   <div id="auth" class="section active">
     <div class="card">
       <h3>Welcome!</h3>
-      <p>Please enter your name and Telegram User ID to continue.</p>
-      <input type="text" id="usernameInput" placeholder="Enter your Name" required>
+      <p>Please enter your Telegram User ID to continue.</p>
       <input type="text" id="telegramUidInput" placeholder="Enter your Telegram User ID" required>
-      <button class="btn" onclick="registerOrLogin()">Enter Your Name</button>
+      <button class="btn" onclick="registerOrLogin()">Continue</button>
       <p style="margin-top: 10px; color: #888; text-align: center; font-size: 13px;">If you're new, your account will be created. If you've been here before, you'll be logged in.</p>
     </div>
   </div>
@@ -340,7 +338,7 @@
         <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
 
         <h4>Add Screenshots for Task Completion</h4>
-        <input type="text" id="screenshotName" placeholder="Enter Your Name (for verification)">
+        <input type="text" id="screenshotName" placeholder="Enter Your Telegram User ID (for verification)">
         <input type="file" id="screenshotUpload" accept="image/*">
         <button class="btn" onclick="submitScreenshot()">Submit Screenshot</button>
         <p class="info" id="screenshot-status"></p>
@@ -407,7 +405,7 @@
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I';
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
 
-  let currentUser = null; // Stores the currently logged-in user's name
+  let currentUser = null; // Stores the currently logged-in user's UID
   let users = JSON.parse(localStorage.getItem('users')) || {}; // Stores all user data from localStorage
 
   // Add a new variable to store the potential referrer ID
@@ -435,8 +433,7 @@
         tasksCompleted: parseInt(document.getElementById('tasksCompleted').innerText),
         totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', '')),
         totalReferrals: parseInt(document.getElementById('totalReferrals').innerText), // Added totalReferrals
-        referredUsers: users[currentUser].referredUsers || [], // Store actual referred user names
-        telegramUid: users[currentUser].telegramUid // Ensure Telegram UID is saved
+        referredUsers: users[currentUser].referredUsers || []
       };
     }
     // Save the entire users object to localStorage
@@ -446,11 +443,11 @@
   /**
    * Loads a specific user's data from the 'users' object and updates the UI.
    * If the user is new, initializes with default values.
-   * @param {string} username - The username to load data for.
+   * @param {string} uid - The Telegram UID to load data for.
    */
-  function loadUserData(username) {
-    if (users[username]) {
-      const userData = users[username];
+  function loadUserData(uid) {
+    if (users[uid]) {
+      const userData = users[uid];
       document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
       document.getElementById("adsWatched").innerText = userData.adsWatched;
       document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
@@ -463,15 +460,14 @@
       const twentyFourHours = 24 * 60 * 60 * 1000;
 
       if (now - lastReset >= twentyFourHours) {
-        users[username].dailyAdsWatched = 0;
-        users[username].lastAdResetDate = new Date().toISOString(); // Set new reset date
+        users[uid].dailyAdsWatched = 0;
+        users[uid].lastAdResetDate = new Date().toISOString(); // Set new reset date
       }
-      document.getElementById("dailyAdsWatched").innerText = users[username].dailyAdsWatched;
-      document.getElementById("dailyAdsWatchedEarn").innerText = users[username].dailyAdsWatched; // Update for earn section
+      document.getElementById("dailyAdsWatched").innerText = users[uid].dailyAdsWatched;
+      document.getElementById("dailyAdsWatchedEarn").innerText = users[uid].dailyAdsWatched; // Update for earn section
 
     } else {
-      // Initialize new user with default values (This block is now mostly redundant
-      // as new user initialization happens directly in registerOrLogin,
+      // This block is mostly redundant as new user initialization happens directly in registerOrLogin,
       // but kept for robustness if logic changes)
       document.getElementById("balance").innerText = `$0.000`;
       document.getElementById("adsWatched").innerText = 0;
@@ -485,18 +481,18 @@
   }
 
   /**
-   * Handles user registration or login based on the entered username and Telegram UID.
+   * Handles user registration or login based on the entered Telegram UID.
+   * The Telegram UID now serves as the unique identifier (username).
    */
   function registerOrLogin() {
-    const usernameInput = document.getElementById('usernameInput').value.trim();
     const telegramUidInput = document.getElementById('telegramUidInput').value.trim(); // Get Telegram UID
 
-    if (usernameInput === "" || telegramUidInput === "") {
-      alert("Please enter both your Name and Telegram User ID to proceed.");
+    if (telegramUidInput === "") {
+      alert("Please enter your Telegram User ID to proceed.");
       return;
     }
 
-    currentUser = usernameInput;
+    currentUser = telegramUidInput; // The UID is now the currentUser
     localStorage.setItem('loggedInUser', currentUser); // Store currently logged-in user for session persistence
 
     // Check if the user is new
@@ -510,8 +506,7 @@
         tasksCompleted: 0,
         totalWithdraw: 0.000,
         totalReferrals: 0,
-        referredUsers: [],
-        telegramUid: telegramUidInput // Store the Telegram UID for new users
+        referredUsers: []
       };
 
       // If there's a referrer ID, assign it and award bonus
@@ -527,18 +522,11 @@
       saveUserData(); // Save the newly created user data immediately
     } else {
       // Existing user logging in
-      // NEW: Validate Telegram UID for existing users
-      if (users[currentUser].telegramUid !== telegramUidInput) {
-        alert("Incorrect Telegram User ID for this username. Please try again.");
-        currentUser = null; // Prevent login if UID is wrong
-        localStorage.removeItem('loggedInUser');
-        return; // Stop the login process
-      }
       console.log(`${currentUser} logged in.`);
     }
 
     loadUserData(currentUser); // Load user-specific data into the UI
-    document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`; // Display welcome message
+    document.getElementById('usernameDisplay').innerText = `Welcome, ${currentUser}!`; // Display welcome message (will show UID)
     document.getElementById('auth').style.display = 'none'; // Hide the login/registration section
     document.getElementById('appSections').style.display = 'block'; // Show the main application content
     document.querySelector('nav').style.display = 'flex'; // Show the navigation bar
@@ -556,7 +544,6 @@
       document.getElementById('auth').style.display = 'block'; // Show login/registration section
       document.getElementById('appSections').style.display = 'none'; // Hide main application content
       document.querySelector('nav').style.display = 'none'; // Hide navigation bar
-      document.getElementById('usernameInput').value = ''; // Clear username input field
       document.getElementById('telegramUidInput').value = ''; // Clear Telegram UID input field
       showFlashMessage("You have been logged out successfully.");
     }
@@ -643,7 +630,7 @@
         saveUserData(); // Save updated user data
 
         if (users[currentUser].dailyAdsWatched < 100) {
-            adTargetMessage.innerText = `You can watch ${100 - users[currentUser].dailyAdsWatched} more ads today.`;
+            adTargetMessage.innerText = `You can watch ${100 - users[currentUser].dailyAdsWatched} more ads today.`
         }
       }
     }, 1000);
@@ -711,23 +698,23 @@
    * Handles submitting a screenshot for task verification to Telegram.
    */
   async function submitScreenshot() {
-    const userNameInput = document.getElementById("screenshotName").value.trim();
+    const userIdForScreenshot = document.getElementById("screenshotName").value.trim(); // This should be the UID for verification
     const screenshotFile = document.getElementById("screenshotUpload").files;
     const screenshotStatus = document.getElementById("screenshot-status");
 
-    if (!userNameInput || screenshotFile.length === 0) {
-      showFlashMessage("Please enter your name for verification and select a screenshot image.");
+    if (!userIdForScreenshot || screenshotFile.length === 0) {
+      showFlashMessage("Please enter your Telegram User ID for verification and select a screenshot image.");
       return;
     }
-    // Ensure the name entered matches the logged-in user for verification
-    if (userNameInput !== currentUser) {
-        showFlashMessage("The name entered for screenshot verification must match your logged-in username.");
+    // Ensure the UID entered matches the logged-in user's UID for verification
+    if (userIdForScreenshot !== currentUser) {
+        showFlashMessage("The User ID entered for screenshot verification must match your logged-in User ID.");
         return;
     }
 
     const formData = new FormData();
     formData.append('chat_id', TELEGRAM_CHAT_ID);
-    formData.append('caption', `New task screenshot submitted:\nUser: ${currentUser}\nName on screenshot: ${userNameInput}`);
+    formData.append('caption', `New task screenshot submitted:\nUser UID: ${currentUser}\nUID on screenshot: ${userIdForScreenshot}`);
     formData.append('photo', screenshotFile[0]); // Upload only the first selected file
 
     screenshotStatus.innerText = "Sending screenshot...";
@@ -897,4 +884,3 @@
 </script>
 </body>
 </html>
-
