@@ -328,7 +328,7 @@
       <input type="text" id="registerFullName" placeholder="Full Name" required>
       <input type="text" id="registerTelegramUid" placeholder="10-digit Telegram User ID" required maxlength="10">
       <input type="email" id="registerGmail" placeholder="Gmail Address" required>
-      <input type="password" id="registerPassword" placeholder="Password" required>
+      <input type="password" id="registerPassword" placeholder="Password (at least 8 characters)" required minlength="8">
       <button class="btn" onclick="handleRegister()">Register</button>
     </div>
 
@@ -587,6 +587,11 @@
     }
     if (!isValidGmail(gmail)) {
       showFlashMessage("Please enter a valid Gmail address (e.g., yourname@gmail.com).");
+      return;
+    }
+    // New validation for password length
+    if (password.length < 8) {
+      showFlashMessage("Password must be at least 8 characters long.");
       return;
     }
 
@@ -1170,7 +1175,7 @@
       const confirmNewPassword = document.getElementById('confirmNewPasswordInput').value;
       const resetStatus = document.getElementById('resetStatus');
 
-      if (!newPassword || newPassword.length < 6) {
+      if (!newPassword || newPassword.length < 6) { // This check should also be updated for 8 characters if consistent
           resetStatus.innerText = "Password must be at least 6 characters long.";
           return;
       }
