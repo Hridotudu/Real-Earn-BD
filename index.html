@@ -318,11 +318,11 @@
 <div class="container">
   <div id="auth" class="section active">
     <div class="auth-switcher">
-        <button id="showRegisterBtn" class="active" onclick="showAuthTab('register')">Register</button>
-        <button id="showLoginBtn" onclick="showAuthTab('login')">Login</button>
+        <button id="showRegisterBtn" onclick="showAuthTab('register')">Register</button>
+        <button id="showLoginBtn" class="active" onclick="showAuthTab('login')">Login</button>
     </div>
 
-    <div id="registerSection" class="card active">
+    <div id="registerFormCard" class="card" style="display:none;">
       <h3>Register</h3>
       <p>Create your new account.</p>
       <input type="text" id="registerFullName" placeholder="Full Name" required>
@@ -332,7 +332,7 @@
       <button class="btn" onclick="handleRegister()">Register</button>
     </div>
 
-    <div id="loginSection" class="card">
+    <div id="loginFormCard" class="card">
       <h3>Login</h3>
       <p>Log in to your account.</p>
       <input type="text" id="loginUsername" placeholder="Gmail or 10-digit Telegram User ID" required>
@@ -447,7 +447,7 @@
 
 <script>
   // Telegram Bot Credentials (Replace with your actual bot token and chat ID)
-  const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I';
+  const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgjHsPuW9s8I'; // Replace with your bot token
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
 
   let currentUserEmail = null; // Stores the currently logged-in user's Gmail
@@ -698,7 +698,7 @@
       document.getElementById('auth').style.display = 'block';
       document.getElementById('appSections').style.display = 'none';
       document.querySelector('nav').style.display = 'none';
-      showAuthTab('register'); // Show register by default if not logged in
+      showAuthTab('login'); // Show login by default if not logged in
     }
   }
 
@@ -707,16 +707,16 @@
    * @param {string} tabId - 'register' or 'login'.
    */
   function showAuthTab(tabId) {
-      document.getElementById('registerSection').classList.remove('active');
-      document.getElementById('loginSection').classList.remove('active');
+      document.getElementById('registerFormCard').style.display = 'none';
+      document.getElementById('loginFormCard').style.display = 'none';
       document.getElementById('showRegisterBtn').classList.remove('active');
       document.getElementById('showLoginBtn').classList.remove('active');
 
       if (tabId === 'register') {
-          document.getElementById('registerSection').classList.add('active');
+          document.getElementById('registerFormCard').style.display = 'block';
           document.getElementById('showRegisterBtn').classList.add('active');
       } else {
-          document.getElementById('loginSection').classList.add('active');
+          document.getElementById('loginFormCard').style.display = 'block';
           document.getElementById('showLoginBtn').classList.add('active');
       }
   }
