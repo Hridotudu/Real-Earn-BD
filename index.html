@@ -13,6 +13,8 @@
       --header-bg: linear-gradient(90deg, #007bff, #00c6ff);
       --button-bg: linear-gradient(45deg, #007bff, #00c6ff);
       --link-color: #007bff;
+      --modal-bg: rgba(0, 0, 0, 0.7); /* Modal overlay background */
+      --modal-content-bg: #fff;
     }
     /* Dark Mode Styles */
     body.dark {
@@ -22,6 +24,7 @@
       --header-bg: linear-gradient(90deg, #333, #555);
       --button-bg: linear-gradient(45deg, #444, #777);
       --link-color: #00c6ff;
+      --modal-content-bg: #2a2a2a;
     }
 
     /* Base Body Styles */
@@ -183,6 +186,100 @@
             padding: 15px;
         }
     }
+
+    /* --- Modal Styles --- */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 1001; /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: var(--modal-bg); /* Black w/ opacity */
+      justify-content: center; /* Center content horizontally */
+      align-items: center; /* Center content vertically */
+    }
+
+    .modal-content {
+      background-color: var(--modal-content-bg);
+      margin: 15% auto; /* 15% from the top and centered */
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      width: 90%; /* Responsive width */
+      max-width: 400px; /* Max width for larger screens */
+      text-align: center;
+      position: relative; /* For close button positioning */
+      color: var(--text-color);
+    }
+
+    .close-button {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close-button:hover,
+    .close-button:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    #referralLinkInput {
+      width: calc(100% - 20px); /* Adjust for padding */
+      padding: 10px;
+      margin: 15px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      text-align: center;
+      cursor: text; /* Allow selection */
+    }
+
+    .copy-btn {
+      background: linear-gradient(45deg, #28a745, #218838); /* Green gradient for copy button */
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      transition: transform 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+      margin-top: 10px;
+    }
+    .copy-btn:hover { transform: scale(1.02); }
+    .copy-btn:active { transform: scale(0.98); }
+
+    /* Flash message for copy confirmation */
+    .flash-message {
+        position: fixed;
+        bottom: 90px; /* Above the nav bar */
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #28a745; /* Green for success */
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+        z-index: 1002; /* Above modal */
+        font-size: 14px;
+        white-space: nowrap; /* Prevent text wrapping */
+    }
+    .flash-message.show {
+        opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -212,7 +309,9 @@
         <p>Total Ads Watched: <strong id="adsWatched">0</strong></p>
         <p>Daily Ads Watched: <strong id="dailyAdsWatched">0</strong></p>
         <p>Tasks Completed: <strong id="tasksCompleted">0</strong></p>
-        <p>Total Referrals: <strong id="totalReferrals">0</strong></p> <img src="https://res.cloudinary.com/dtjjgiitl/image/upload/q_auto:good,f_auto,fl_progressive/v1752401954/w0d4yapthokp30zvta1j.jpg" alt="Meditation Image" style="max-width:100%; height:auto; display:block; margin: 15px auto;">
+        <p>Total Referrals: <strong id="totalReferrals">0</strong></p> 
+        
+        <img src="https://res.cloudinary.com/dtjjgiitl/image/upload/q_auto:good,f_auto,fl_progressive/v1752401954/w0d4yapthokp30zvta1j.jpg" alt="Meditation Image" style="max-width:100%; height:auto; display:block; margin: 15px auto;">
         <button class="btn" onclick="logout()">Logout</button>
       </div>
     </div>
@@ -271,7 +370,8 @@
         <p>Daily Ads: <strong id="dailyAdsWatchedProfile">0</strong></p>
         <p>Total Tasks: <strong id="tasksCompletedProfile">0</strong></p>
         <p>Total Withdraw: <strong id="withdrawTotal">$0.00</strong></p>
-        <p>Total Referrals: <strong id="totalReferralsProfile">0</strong></p> <p style="margin-top:10px;color:#888;">❤️Developer:Hridoy Skill❤️</p>
+        <p>Total Referrals: <strong id="totalReferralsProfile">0</strong></p> 
+        <p style="margin-top:10px;color:#888;">❤️Developer:Hridoy Skill❤️</p>
         <img src="https://res.cloudinary.com/dtjjgiitl/image/upload/q_auto:good,f_auto,fl_progressive/v1752401954/w0d4yapthokp30zvta1j.jpg" alt="Meditation Image" style="max-width:100%; height:auto; display:block; margin: 15px auto;">
       </div>
     </div>
@@ -284,6 +384,19 @@
   <button onclick="showTab('contact')">Contact</button>
   <button onclick="showTab('profile')">Profile</button>
 </nav>
+
+<div id="referralModal" class="modal">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeReferralModal()">&times;</span>
+    <h3>আপনার রেফারেল লিঙ্ক</h3>
+    <p style="font-size: 14px; color: #888;">এই লিঙ্কটি শেয়ার করে বন্ধুদের ইনভাইট করুন এবং ইনকাম করুন!</p>
+    <input type="text" id="referralLinkInput" value="" readonly>
+    <button class="copy-btn" onclick="copyReferralLink()">কপি লিঙ্ক</button>
+    <p id="copyStatus" style="font-size: 13px; color: green; margin-top: 10px;"></p>
+  </div>
+</div>
+
+<div id="flashMessage" class="flash-message"></div>
 
 <script src="//libtl.com/sdk.js" data-zone="9506403" data-sdk="show_9506403"></script>
 
@@ -400,7 +513,7 @@
         users[referrerId].totalReferrals++; // Increment referrer's total referrals
         users[referrerId].referredUsers.push(currentUser); // Add new user to referrer's list
         
-        alert(`স্বাগতম, ${currentUser}! একটি রেফারেল বোনাস ${referrerId}-এর অ্যাকাউন্টে যোগ করা হয়েছে।`);
+        showFlashMessage(`স্বাগতম, ${currentUser}! একটি রেফারেল বোনাস ${referrerId}-এর অ্যাকাউন্টে যোগ করা হয়েছে।`);
         sendTelegramMessage(`নতুন ব্যবহারকারী নিবন্ধিত: ${currentUser}\nরেফার করেছেন: ${referrerId}\nরেফারেল বোনাস ${referrerId}-কে প্রদান করা হয়েছে`);
       }
       saveUserData(); // Save the newly created user data immediately
@@ -429,7 +542,7 @@
       document.getElementById('appSections').style.display = 'none'; // Hide main application content
       document.querySelector('nav').style.display = 'none'; // Hide navigation bar
       document.getElementById('usernameInput').value = ''; // Clear username input field
-      alert("You have been logged out successfully.");
+      showFlashMessage("You have been logged out successfully.");
     }
   }
 
@@ -487,7 +600,7 @@
     if (typeof show_9506403 === "function") {
       show_9506403(); // Call the external ad display function
     } else {
-      alert("Ads not loaded. Please ensure you have an active internet connection or try refreshing the page.");
+      showFlashMessage("Ads not loaded. Please ensure you have an active internet connection or try refreshing the page.");
       return;
     }
 
@@ -531,19 +644,51 @@
         console.log(`Attempting to open YouTube video with ID: ${videoId}`);
     }
     window.open(url, '_blank'); // Open URL in a new tab
-    alert("Task opened. Please complete the task and submit a screenshot for verification to earn!");
+    showFlashMessage("Task opened. Please complete the task and submit a screenshot for verification to earn!");
   }
 
   /**
-   * Displays the user's unique Telegram referral link.
+   * Displays the referral modal with the user's unique Telegram referral link.
    */
   function showReferralLink() {
       if (currentUser) {
           const referralLink = `https://t.me/RealEarnBD62_bot?start=ref_${currentUser}`;
-          alert(`আপনার রেফারেল লিঙ্ক:\n\n${referralLink}\n\nএই লিঙ্কটি শেয়ার করে আরও বেশি ইনকাম করুন!`);
+          document.getElementById('referralLinkInput').value = referralLink;
+          document.getElementById('referralModal').style.display = 'flex'; // Show modal
+          document.getElementById('copyStatus').innerText = ''; // Clear previous status
       } else {
-          alert("রেফারেল লিঙ্ক দেখতে অনুগ্রহ করে প্রথমে লগইন করুন।");
+          showFlashMessage("রেফারেল লিঙ্ক দেখতে অনুগ্রহ করে প্রথমে লগইন করুন।");
       }
+  }
+
+  /**
+   * Hides the referral modal.
+   */
+  function closeReferralModal() {
+      document.getElementById('referralModal').style.display = 'none'; // Hide modal
+  }
+
+  /**
+   * Copies the referral link from the input field to the clipboard.
+   */
+  function copyReferralLink() {
+      const referralLinkInput = document.getElementById('referralLinkInput');
+      referralLinkInput.select(); // Select the text in the input field
+      referralLinkInput.setSelectionRange(0, 99999); // For mobile devices
+
+      // Copy the text
+      navigator.clipboard.writeText(referralLinkInput.value).then(() => {
+          document.getElementById('copyStatus').innerText = "লিঙ্কটি সফলভাবে কপি করা হয়েছে!";
+          showFlashMessage("রেফারেল লিঙ্ক কপি করা হয়েছে!");
+          setTimeout(() => { // Clear status after a short delay
+              document.getElementById('copyStatus').innerText = '';
+              closeReferralModal(); // Optionally close modal after successful copy
+          }, 1500);
+      }).catch(err => {
+          document.getElementById('copyStatus').innerText = "কপি করতে ব্যর্থ। ম্যানুয়ালি কপি করুন।";
+          showFlashMessage("লিঙ্ক কপি করা যায়নি!");
+          console.error('Failed to copy referral link: ', err);
+      });
   }
 
   /**
@@ -555,12 +700,12 @@
     const screenshotStatus = document.getElementById("screenshot-status");
 
     if (!userNameInput || screenshotFile.length === 0) {
-      alert("Please enter your name for verification and select a screenshot image.");
+      showFlashMessage("Please enter your name for verification and select a screenshot image.");
       return;
     }
     // Ensure the name entered matches the logged-in user for verification
     if (userNameInput !== currentUser) {
-        alert("The name entered for screenshot verification must match your logged-in username.");
+        showFlashMessage("The name entered for screenshot verification must match your logged-in username.");
         return;
     }
 
@@ -579,6 +724,7 @@
       const result = await response.json();
       if (result.ok) {
         screenshotStatus.innerText = "Screenshot sent successfully! Waiting for verification...";
+        showFlashMessage("স্ক্রিনশট পাঠানো হয়েছে!");
         
         // Simulate verification delay
         let sec = 10; // seconds
@@ -592,6 +738,7 @@
             users[currentUser].tasksCompleted++; // Increment task count
             updateStatsDisplay(); // Update UI display
             screenshotStatus.innerText = `Verification complete! $0.005 added to your balance.`;
+            showFlashMessage(`ভেরিফিকেশন সম্পন্ন! ব্যালেন্সে $0.005 যোগ হয়েছে।`);
             // Clear input fields after successful submission and award
             document.getElementById("screenshotName").value = '';
             document.getElementById("screenshotUpload").value = '';
@@ -601,11 +748,13 @@
 
       } else {
         screenshotStatus.innerText = "Failed to send screenshot. Please try again. Error: " + (result.description || "Unknown");
+        showFlashMessage("স্ক্রিনশট পাঠাতে ব্যর্থ!");
         console.error("Telegram API error:", result);
       }
     } catch (error) {
       console.error("Error submitting screenshot:", error);
       screenshotStatus.innerText = "An error occurred while submitting the screenshot. Please check your internet connection.";
+      showFlashMessage("নেটওয়ার্ক ত্রুটি!");
     }
   }
 
@@ -650,7 +799,7 @@
     const method = document.getElementById("withdrawMethod").value;
 
     if (!amount || !method || amount > users[currentUser].balance || amount <= 0) {
-      alert("Please fill all fields correctly, and ensure the amount is valid and less than or equal to your balance.");
+      showFlashMessage("Please fill all fields correctly, and ensure the amount is valid and less than or equal to your balance.");
       return;
     }
 
@@ -671,18 +820,18 @@
         users[currentUser].referredUsers = []; // Clear the list of referred users
         
         updateStatsDisplay(); // Update UI display
-        alert("Withdraw request sent successfully! Your balance and referral count have been reset.");
+        showFlashMessage("Withdraw request sent successfully! Your balance and referral count have been reset.");
         // Clear withdraw input fields
         document.getElementById("withdrawAmount").value = '';
         document.getElementById("withdrawMethod").value = '';
         saveUserData(); // Save updated user data
       } else {
-        alert("Failed to send withdraw request. Please try again. Error: " + (result.description || "Unknown"));
+        showFlashMessage("Failed to send withdraw request. Please try again.");
         console.error("Telegram API error:", result);
       }
     } catch (error) {
       console.error("Error submitting withdraw request:", error);
-      alert("An error occurred while submitting the withdraw request. Please check your internet connection.");
+      showFlashMessage("An error occurred while submitting the withdraw request.");
     }
   }
 
@@ -704,6 +853,20 @@
       } catch (error) {
           console.error("Error sending Telegram message:", error);
       }
+  }
+
+  /**
+   * Displays a flash message at the bottom of the screen.
+   * @param {string} message - The message to display.
+   * @param {number} duration - How long to display the message in milliseconds (default 3000).
+   */
+  function showFlashMessage(message, duration = 3000) {
+      const flashMessageDiv = document.getElementById('flashMessage');
+      flashMessageDiv.innerText = message;
+      flashMessageDiv.classList.add('show');
+      setTimeout(() => {
+          flashMessageDiv.classList.remove('show');
+      }, duration);
   }
 
   /**
