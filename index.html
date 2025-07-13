@@ -1,3 +1,4 @@
+আপনার দেওয়া সম্পূর্ণ কোডটি ইংরেজিতে নিচে দেওয়া হলো:
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,8 +293,9 @@
   <div id="auth" class="section active">
     <div class="card">
       <h3>Welcome!</h3>
-      <p>Please enter your name to continue.</p>
+      <p>Please enter your name and Telegram User ID to continue.</p>
       <input type="text" id="usernameInput" placeholder="Enter your Name" required>
+      <input type="text" id="telegramUidInput" placeholder="Enter your Telegram User ID" required>
       <button class="btn" onclick="registerOrLogin()">Enter Your Name</button>
       <p style="margin-top: 10px; color: #888; text-align: center; font-size: 13px;">If you're new, your account will be created. If you've been here before, you'll be logged in.</p>
     </div>
@@ -387,11 +389,11 @@
 
 <div id="referralModal" class="modal">
   <div class="modal-content">
-    <span class="close-button" onclick="closeReferralModal()">&times;</span>
-    <h3>আপনার রেফারেল লিঙ্ক</h3>
-    <p style="font-size: 14px; color: #888;">এই লিঙ্কটি শেয়ার করে বন্ধুদের ইনভাইট করুন এবং ইনকাম করুন!</p>
+    <span class="close-button" onclick="closeReferralModal()">×</span>
+    <h3>Your Referral Link</h3>
+    <p style="font-size: 14px; color: #888;">Share this link to invite friends and earn!</p>
     <input type="text" id="referralLinkInput" value="" readonly>
-    <button class="copy-btn" onclick="copyReferralLink()">কপি লিঙ্ক</button>
+    <button class="copy-btn" onclick="copyReferralLink()">Copy Link</button>
     <p id="copyStatus" style="font-size: 13px; color: green; margin-top: 10px;"></p>
   </div>
 </div>
@@ -433,7 +435,8 @@
         tasksCompleted: parseInt(document.getElementById('tasksCompleted').innerText),
         totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', '')),
         totalReferrals: parseInt(document.getElementById('totalReferrals').innerText), // Added totalReferrals
-        referredUsers: users[currentUser].referredUsers || [] // Store actual referred user names
+        referredUsers: users[currentUser].referredUsers || [], // Store actual referred user names
+        telegramUid: users[currentUser].telegramUid // Ensure Telegram UID is saved
       };
     }
     // Save the entire users object to localStorage
@@ -467,25 +470,29 @@
       document.getElementById("dailyAdsWatchedEarn").innerText = users[username].dailyAdsWatched; // Update for earn section
 
     } else {
-      // Initialize new user with default values
+      // Initialize new user with default values (This block is now mostly redundant
+      // as new user initialization happens directly in registerOrLogin,
+      // but kept for robustness if logic changes)
       document.getElementById("balance").innerText = `$0.000`;
       document.getElementById("adsWatched").innerText = 0;
       document.getElementById("dailyAdsWatched").innerText = 0;
-      document.getElementById("dailyAdsWatchedEarn").innerText = 0; // Initialize for earn section
+      document.getElementById("dailyAdsWatchedEarn").innerText = 0;
       document.getElementById("tasksCompleted").innerText = 0;
       document.getElementById("withdrawTotal").innerText = `$0.000`;
-      document.getElementById("totalReferrals").innerText = 0; // Initialize for new user
+      document.getElementById("totalReferrals").innerText = 0;
     }
     updateProfileStats(); // Also update the profile section's display
   }
 
   /**
-   * Handles user registration or login based on the entered username.
+   * Handles user registration or login based on the entered username and Telegram UID.
    */
   function registerOrLogin() {
     const usernameInput = document.getElementById('usernameInput').value.trim();
-    if (usernameInput === "") {
-      alert("Please enter your name to proceed.");
+    const telegramUidInput = document.getElementById('telegramUidInput').value.trim(); // Get Telegram UID
+
+    if (usernameInput === "" || telegramUidInput === "") {
+      alert("Please enter both your Name and Telegram User ID to proceed.");
       return;
     }
 
@@ -502,8 +509,9 @@
         lastAdResetDate: new Date().toISOString(),
         tasksCompleted: 0,
         totalWithdraw: 0.000,
-        totalReferrals: 0, // Initialize total referrals for new user
-        referredUsers: [] // Initialize referred users list for new user
+        totalReferrals: 0,
+        referredUsers: [],
+        telegramUid: telegramUidInput // Store the Telegram UID for new users
       };
 
       // If there's a referrer ID, assign it and award bonus
@@ -513,12 +521,19 @@
         users[referrerId].totalReferrals++; // Increment referrer's total referrals
         users[referrerId].referredUsers.push(currentUser); // Add new user to referrer's list
         
-        showFlashMessage(`স্বাগতম, ${currentUser}! একটি রেফারেল বোনাস ${referrerId}-এর অ্যাকাউন্টে যোগ করা হয়েছে।`);
-        sendTelegramMessage(`নতুন ব্যবহারকারী নিবন্ধিত: ${currentUser}\nরেফার করেছেন: ${referrerId}\nরেফারেল বোনাস ${referrerId}-কে প্রদান করা হয়েছে`);
+        showFlashMessage(`Welcome, ${currentUser}! A referral bonus has been added to ${referrerId}'s account.`);
+        sendTelegramMessage(`New user registered: ${currentUser}\nReferred by: ${referrerId}\nReferral bonus paid to ${referrerId}`);
       }
       saveUserData(); // Save the newly created user data immediately
     } else {
       // Existing user logging in
+      // NEW: Validate Telegram UID for existing users
+      if (users[currentUser].telegramUid !== telegramUidInput) {
+        alert("Incorrect Telegram User ID for this username. Please try again.");
+        currentUser = null; // Prevent login if UID is wrong
+        localStorage.removeItem('loggedInUser');
+        return; // Stop the login process
+      }
       console.log(`${currentUser} logged in.`);
     }
 
@@ -542,6 +557,7 @@
       document.getElementById('appSections').style.display = 'none'; // Hide main application content
       document.querySelector('nav').style.display = 'none'; // Hide navigation bar
       document.getElementById('usernameInput').value = ''; // Clear username input field
+      document.getElementById('telegramUidInput').value = ''; // Clear Telegram UID input field
       showFlashMessage("You have been logged out successfully.");
     }
   }
@@ -605,8 +621,8 @@
     }
 
     if (users[currentUser].dailyAdsWatched >= 100) {
-      status.innerText = "আপনার আজকের অ্যাডের সীমা শেষ। অনুগ্রহ করে আগামীকাল চেষ্টা করুন।";
-      adTargetMessage.innerText = `আজকের জন্য আপনার ${users[currentUser].dailyAdsWatched}টি অ্যাড দেখা হয়ে গেছে।`;
+      status.innerText = "Your daily ad limit is reached. Please try again tomorrow.";
+      adTargetMessage.innerText = `You have watched ${users[currentUser].dailyAdsWatched} ads for today.`;
       return;
     }
 
@@ -627,7 +643,7 @@
         saveUserData(); // Save updated user data
 
         if (users[currentUser].dailyAdsWatched < 100) {
-            adTargetMessage.innerText = `আজ আপনি আরও ${100 - users[currentUser].dailyAdsWatched}টি অ্যাড দেখতে পারবেন।`;
+            adTargetMessage.innerText = `You can watch ${100 - users[currentUser].dailyAdsWatched} more ads today.`;
         }
       }
     }, 1000);
@@ -652,12 +668,12 @@
    */
   function showReferralLink() {
       if (currentUser) {
-          const referralLink = `https://t.me/RealEarnBD62_bot?start=ref_${currentUser}`;
+          const referralLink = `https://t.me/RealEarnBD62_bot?startapp=ref_${currentUser}`;
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex'; // Show modal
           document.getElementById('copyStatus').innerText = ''; // Clear previous status
       } else {
-          showFlashMessage("রেফারেল লিঙ্ক দেখতে অনুগ্রহ করে প্রথমে লগইন করুন।");
+          showFlashMessage("Please log in first to see the referral link.");
       }
   }
 
@@ -678,15 +694,15 @@
 
       // Copy the text
       navigator.clipboard.writeText(referralLinkInput.value).then(() => {
-          document.getElementById('copyStatus').innerText = "লিঙ্কটি সফলভাবে কপি করা হয়েছে!";
-          showFlashMessage("রেফারেল লিঙ্ক কপি করা হয়েছে!");
+          document.getElementById('copyStatus').innerText = "Link copied successfully!";
+          showFlashMessage("Referral link copied!");
           setTimeout(() => { // Clear status after a short delay
               document.getElementById('copyStatus').innerText = '';
               closeReferralModal(); // Optionally close modal after successful copy
           }, 1500);
       }).catch(err => {
-          document.getElementById('copyStatus').innerText = "কপি করতে ব্যর্থ। ম্যানুয়ালি কপি করুন।";
-          showFlashMessage("লিঙ্ক কপি করা যায়নি!");
+          document.getElementById('copyStatus').innerText = "Failed to copy. Copy manually.";
+          showFlashMessage("Failed to copy link!");
           console.error('Failed to copy referral link: ', err);
       });
   }
@@ -724,7 +740,7 @@
       const result = await response.json();
       if (result.ok) {
         screenshotStatus.innerText = "Screenshot sent successfully! Waiting for verification...";
-        showFlashMessage("স্ক্রিনশট পাঠানো হয়েছে!");
+        showFlashMessage("Screenshot sent!");
         
         // Simulate verification delay
         let sec = 10; // seconds
@@ -738,7 +754,7 @@
             users[currentUser].tasksCompleted++; // Increment task count
             updateStatsDisplay(); // Update UI display
             screenshotStatus.innerText = `Verification complete! $0.005 added to your balance.`;
-            showFlashMessage(`ভেরিফিকেশন সম্পন্ন! ব্যালেন্সে $0.005 যোগ হয়েছে।`);
+            showFlashMessage(`Verification complete! $0.005 added to your balance.`);
             // Clear input fields after successful submission and award
             document.getElementById("screenshotName").value = '';
             document.getElementById("screenshotUpload").value = '';
@@ -748,13 +764,13 @@
 
       } else {
         screenshotStatus.innerText = "Failed to send screenshot. Please try again. Error: " + (result.description || "Unknown");
-        showFlashMessage("স্ক্রিনশট পাঠাতে ব্যর্থ!");
+        showFlashMessage("Failed to send screenshot!");
         console.error("Telegram API error:", result);
       }
     } catch (error) {
       console.error("Error submitting screenshot:", error);
       screenshotStatus.innerText = "An error occurred while submitting the screenshot. Please check your internet connection.";
-      showFlashMessage("নেটওয়ার্ক ত্রুটি!");
+      showFlashMessage("Network error!");
     }
   }
 
@@ -785,9 +801,9 @@
 
     const adTargetMessage = document.getElementById("ad-target-message");
     if (users[currentUser].dailyAdsWatched < 100) {
-        adTargetMessage.innerText = `আজ আপনি আরও ${100 - users[currentUser].dailyAdsWatched}টি অ্যাড দেখতে পারবেন।`;
+        adTargetMessage.innerText = `You can watch ${100 - users[currentUser].dailyAdsWatched} more ads today.`;
     } else {
-        adTargetMessage.innerText = `আজকের জন্য আপনার ${users[currentUser].dailyAdsWatched}টি অ্যাড দেখা হয়ে গেছে।`;
+        adTargetMessage.innerText = `You have watched ${users[currentUser].dailyAdsWatched} ads for today.`;
     }
   }
 
@@ -881,3 +897,4 @@
 </script>
 </body>
 </html>
+
