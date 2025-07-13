@@ -228,6 +228,7 @@
       </div>
       <div class="card">
         <h3>Tasks</h3>
+        <p style="margin-top: 10px; color: #888; text-align: center; font-size: 13px;">Complete a task, then submit a screenshot below for verification to earn!</p>
         <button class="btn" onclick="taskWithRedirect('https://t.me/Hridoy_Skill')">Join Telegram</button>
         <button class="btn" onclick="taskWithRedirect('https://youtube.com/@hridoy_skill_0.69?si=GfXezqZBlqsXYWVc')">Subscribe YouTube</button>
         <button class="btn" onclick="taskWithRedirect('https://www.facebook.com/Hridoy.tudu.69')">Like Facebook Page</button>
@@ -480,7 +481,7 @@
   }
 
   /**
-   * Handles task completion with a redirect, simulating a delay before awarding.
+   * Handles task completion with a redirect. Money is NOT awarded here.
    * @param {string} url - The URL to redirect the user to for the task.
    */
   function taskWithRedirect(url) {
@@ -495,20 +496,7 @@
         // For now, we'll just open the URL as it is provided in the HTML.
     }
     window.open(url, '_blank'); // Open URL in a new tab
-    
-    // Simulate task completion delay
-    let wait = 15; // seconds
-    let countdown = setInterval(() => {
-      wait--;
-      if (wait <= 0) {
-        clearInterval(countdown);
-        users[currentUser].balance += 0.005; // Award earnings
-        users[currentUser].tasksCompleted++; // Increment task count
-        updateStatsDisplay(); // Update UI display
-        alert("Task complete! $0.005 has been added to your balance.");
-        saveUserData(); // Save updated user data
-      }
-    }, 1000);
+    alert("Task opened. Please complete the task and submit a screenshot for verification to earn!");
   }
 
   /**
