@@ -212,8 +212,7 @@
         <p>Total Ads Watched: <strong id="adsWatched">0</strong></p>
         <p>Daily Ads Watched: <strong id="dailyAdsWatched">0</strong></p>
         <p>Tasks Completed: <strong id="tasksCompleted">0</strong></p>
-        
-        <img src="https://res.cloudinary.com/dtjjgiitl/image/upload/q_auto:good,f_auto,fl_progressive/v1752401954/w0d4yapthokp30zvta1j.jpg" alt="Meditation Image" style="max-width:100%; height:auto; display:block; margin: 15px auto;">
+        <p>Total Referrals: <strong id="totalReferrals">0</strong></p> <img src="https://res.cloudinary.com/dtjjgiitl/image/upload/q_auto:good,f_auto,fl_progressive/v1752401954/w0d4yapthokp30zvta1j.jpg" alt="Meditation Image" style="max-width:100%; height:auto; display:block; margin: 15px auto;">
         <button class="btn" onclick="logout()">Logout</button>
       </div>
     </div>
@@ -270,7 +269,7 @@
         <p>Daily Ads: <strong id="dailyAdsWatchedProfile">0</strong></p>
         <p>Total Tasks: <strong id="tasksCompletedProfile">0</strong></p>
         <p>Total Withdraw: <strong id="withdrawTotal">$0.00</strong></p>
-        <p style="margin-top:10px;color:#888;">❤️Developer:Hridoy Skill❤️</p>
+        <p>Total Referrals: <strong id="totalReferralsProfile">0</strong></p> <p style="margin-top:10px;color:#888;">❤️Developer:Hridoy Skill❤️</p>
         <img src="https://res.cloudinary.com/dtjjgiitl/image/upload/q_auto:good,f_auto,fl_progressive/v1752401954/w0d4yapthokp30zvta1j.jpg" alt="Meditation Image" style="max-width:100%; height:auto; display:block; margin: 15px auto;">
       </div>
     </div>
@@ -294,6 +293,17 @@
   let currentUser = null; // Stores the currently logged-in user's name
   let users = JSON.parse(localStorage.getItem('users')) || {}; // Stores all user data from localStorage
 
+  // Add a new variable to store the potential referrer ID
+  let referrerId = null;
+
+  // --- Add this function to parse URL parameters ---
+  function getUrlParameter(name) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      var results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  }
+
   /**
    * Saves the current user's data to the global 'users' object and then to localStorage.
    */
@@ -306,7 +316,9 @@
         dailyAdsWatched: parseInt(document.getElementById('dailyAdsWatched').innerText),
         lastAdResetDate: users[currentUser].lastAdResetDate || new Date().toISOString(), // Fallback if not set
         tasksCompleted: parseInt(document.getElementById('tasksCompleted').innerText),
-        totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', ''))
+        totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', '')),
+        totalReferrals: parseInt(document.getElementById('totalReferrals').innerText), // Added totalReferrals
+        referredUsers: users[currentUser].referredUsers || [] // Store actual referred user names
       };
     }
     // Save the entire users object to localStorage
@@ -325,6 +337,7 @@
       document.getElementById("adsWatched").innerText = userData.adsWatched;
       document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
       document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+      document.getElementById("totalReferrals").innerText = userData.totalReferrals || 0; // Load total referrals
       
       // Handle daily ad reset
       const now = new Date().getTime();
@@ -346,6 +359,7 @@
       document.getElementById("dailyAdsWatchedEarn").innerText = 0; // Initialize for earn section
       document.getElementById("tasksCompleted").innerText = 0;
       document.getElementById("withdrawTotal").innerText = `$0.000`;
+      document.getElementById("totalReferrals").innerText = 0; // Initialize for new user
     }
     updateProfileStats(); // Also update the profile section's display
   }
@@ -363,17 +377,34 @@
     currentUser = usernameInput;
     localStorage.setItem('loggedInUser', currentUser); // Store currently logged-in user for session persistence
 
-    // If the user does not exist in our 'users' object, create a new entry for them
+    // Check if the user is new
     if (!users[currentUser]) {
+      // This is a NEW user registration
       users[currentUser] = {
         balance: 0.000,
         adsWatched: 0,
         dailyAdsWatched: 0,
-        lastAdResetDate: new Date().toISOString(), // Initialize with current time for new users
+        lastAdResetDate: new Date().toISOString(),
         tasksCompleted: 0,
-        totalWithdraw: 0.000
+        totalWithdraw: 0.000,
+        totalReferrals: 0, // Initialize total referrals for new user
+        referredUsers: [] // Initialize referred users list for new user
       };
+
+      // If there's a referrer ID, assign it and award bonus
+      if (referrerId && referrerId !== currentUser && users[referrerId]) { // Ensure referrer exists and not self-referring
+        users[currentUser].referredBy = referrerId; // Track who referred this new user
+        users[referrerId].balance += 0.020; // Example: Referrer gets $0.020
+        users[referrerId].totalReferrals++; // Increment referrer's total referrals
+        users[referrerId].referredUsers.push(currentUser); // Add new user to referrer's list
+        
+        alert(`স্বাগতম, ${currentUser}! একটি রেফারেল বোনাস ${referrerId}-এর অ্যাকাউন্টে যোগ করা হয়েছে।`);
+        sendTelegramMessage(`নতুন ব্যবহারকারী নিবন্ধিত: ${currentUser}\nরেফার করেছেন: ${referrerId}\nরেফারেল বোনাস ${referrerId}-কে প্রদান করা হয়েছে`);
+      }
       saveUserData(); // Save the newly created user data immediately
+    } else {
+      // Existing user logging in
+      console.log(`${currentUser} logged in.`);
     }
 
     loadUserData(currentUser); // Load user-specific data into the UI
@@ -404,6 +435,15 @@
    * Checks if a user was previously logged in on page load and restores the session.
    */
   function checkLoginStatus() {
+    // Capture referrer ID from URL on initial load BEFORE login check
+    referrerId = getUrlParameter('ref');
+    if (referrerId) {
+        console.log(`Potential referrer ID found in URL: ${referrerId}`);
+        sessionStorage.setItem('tempReferrerId', referrerId);
+    } else {
+        referrerId = sessionStorage.getItem('tempReferrerId');
+    }
+
     const loggedInUser = localStorage.getItem('loggedInUser');
     if (loggedInUser) {
       currentUser = loggedInUser;
@@ -473,8 +513,6 @@
 
         if (users[currentUser].dailyAdsWatched < 100) {
             adTargetMessage.innerText = `আজ আপনি আরও ${100 - users[currentUser].dailyAdsWatched}টি অ্যাড দেখতে পারবেন।`;
-        } else {
-            adTargetMessage.innerText = `আজকের জন্য আপনার ${users[currentUser].dailyAdsWatched}টি অ্যাড দেখা হয়ে গেছে।`;
         }
       }
     }, 1000);
@@ -488,12 +526,7 @@
     // Check if it's a YouTube URL and use the YouTube tool if applicable
     if (url.startsWith('http://googleusercontent.com/youtube.com/')) {
         const videoId = url.split('/').pop();
-        // Assuming you want to search or get metadata for the video
-        // This part needs to be handled by the backend if you want to use the actual YouTube API
-        // For client-side, we'll just open the URL.
         console.log(`Attempting to open YouTube video with ID: ${videoId}`);
-        // You can replace this with a call to your backend if you have one that uses the YouTube API
-        // For now, we'll just open the URL as it is provided in the HTML.
     }
     window.open(url, '_blank'); // Open URL in a new tab
     alert("Task opened. Please complete the task and submit a screenshot for verification to earn!");
@@ -563,7 +596,7 @@
   }
 
   /**
-   * Updates the balance, ads watched, and tasks completed displays for the current user.
+   * Updates the balance, ads watched, tasks completed, and referrals displays for the current user.
    */
   function updateStatsDisplay() {
     const userData = users[currentUser];
@@ -572,7 +605,7 @@
     document.getElementById("dailyAdsWatched").innerText = userData.dailyAdsWatched; // Update daily ads for dashboard
     document.getElementById("dailyAdsWatchedEarn").innerText = userData.dailyAdsWatched; // Update daily ads for earn section
     document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
-    // Withdraw total is updated by updateProfileStats, which is called after this.
+    document.getElementById("totalReferrals").innerText = userData.totalReferrals; // Update total referrals
     updateProfileStats(); // Ensure profile section is also updated
   }
 
@@ -585,6 +618,7 @@
     document.getElementById("dailyAdsWatchedProfile").innerText = userData.dailyAdsWatched; // Update daily ads in profile
     document.getElementById("tasksCompletedProfile").innerText = userData.tasksCompleted;
     document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+    document.getElementById("totalReferralsProfile").innerText = userData.totalReferrals; // Update total referrals in profile
 
     const adTargetMessage = document.getElementById("ad-target-message");
     if (users[currentUser].dailyAdsWatched < 100) {
@@ -595,7 +629,7 @@
   }
 
   /**
-   * Handles user withdrawal requests, sends details to Telegram, and resets balance.
+   * Handles user withdrawal requests, sends details to Telegram, resets balance, and resets referrals.
    */
   async function submitWithdraw() {
     const amount = parseFloat(document.getElementById("withdrawAmount").value);
@@ -606,7 +640,7 @@
       return;
     }
 
-    const message = `New Withdraw Request from user: ${currentUser}\nAmount: $${amount.toFixed(3)}\nPayment Method: ${method}\nBalance Before: $${users[currentUser].balance.toFixed(3)}`;
+    const message = `New Withdraw Request from user: ${currentUser}\nAmount: $${amount.toFixed(3)}\nPayment Method: ${method}\nBalance Before: $${users[currentUser].balance.toFixed(3)}\nTotal Referrals Before: ${users[currentUser].totalReferrals}`;
 
     try {
       const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -619,8 +653,11 @@
       if (result.ok) {
         users[currentUser].balance = 0; // Reset balance after withdrawal request
         users[currentUser].totalWithdraw += amount; // Add to total withdrawn amount
+        users[currentUser].totalReferrals = 0; // Reset total referrals after withdrawal
+        users[currentUser].referredUsers = []; // Clear the list of referred users
+        
         updateStatsDisplay(); // Update UI display
-        alert("Withdraw request sent successfully! Your balance has been reset to $0.000.");
+        alert("Withdraw request sent successfully! Your balance and referral count have been reset.");
         // Clear withdraw input fields
         document.getElementById("withdrawAmount").value = '';
         document.getElementById("withdrawMethod").value = '';
@@ -633,6 +670,26 @@
       console.error("Error submitting withdraw request:", error);
       alert("An error occurred while submitting the withdraw request. Please check your internet connection.");
     }
+  }
+
+  // --- Add a function to send Telegram messages (if not already present) ---
+  async function sendTelegramMessage(message) {
+      const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I'; // Your Bot Token
+      const TELEGRAM_CHAT_ID = '5965219037'; // Your Chat ID to receive notifications
+
+      try {
+          const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
+          });
+          const result = await response.json();
+          if (!result.ok) {
+              console.error("Failed to send Telegram message:", result.description);
+          }
+      } catch (error) {
+          console.error("Error sending Telegram message:", error);
+      }
   }
 
   /**
