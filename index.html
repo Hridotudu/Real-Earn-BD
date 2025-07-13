@@ -292,8 +292,8 @@
   <div id="auth" class="section active">
     <div class="card">
       <h3>Welcome!</h3>
-      <p>Please enter your Telegram User ID to continue.</p>
-      <input type="text" id="telegramUidInput" placeholder="Enter your Telegram User ID" required>
+      <p>Please enter your **10-digit Telegram User ID** to continue.</p>
+      <input type="text" id="telegramUidInput" placeholder="Enter your 10-digit Telegram User ID" required maxlength="10">
       <button class="btn" onclick="registerOrLogin()">Continue</button>
       <p style="margin-top: 10px; color: #888; text-align: center; font-size: 13px;">If you're new, your account will be created. If you've been here before, you'll be logged in.</p>
     </div>
@@ -338,7 +338,7 @@
         <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
 
         <h4>Add Screenshots for Task Completion</h4>
-        <input type="text" id="screenshotName" placeholder="Enter Your Telegram User ID (for verification)">
+        <input type="text" id="screenshotName" placeholder="Enter Your 10-digit Telegram User ID (for verification)" maxlength="10">
         <input type="file" id="screenshotUpload" accept="image/*">
         <button class="btn" onclick="submitScreenshot()">Submit Screenshot</button>
         <p class="info" id="screenshot-status"></p>
@@ -487,8 +487,9 @@
   function registerOrLogin() {
     const telegramUidInput = document.getElementById('telegramUidInput').value.trim(); // Get Telegram UID
 
-    if (telegramUidInput === "") {
-      alert("Please enter your Telegram User ID to proceed.");
+    // NEW: UID length and numeric validation
+    if (telegramUidInput === "" || telegramUidInput.length !== 10 || isNaN(telegramUidInput)) {
+      alert("Please enter a valid 10-digit Telegram User ID.");
       return;
     }
 
