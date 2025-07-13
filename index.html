@@ -208,7 +208,8 @@
       <div class="card">
         <h3>Dashboard</h3>
         <p>Balance: <strong id="balance">$0.000</strong></p>
-        <p>Ads Watched: <strong id="adsWatched">0</strong></p>
+        <p>Total Ads Watched: <strong id="adsWatched">0</strong></p>
+        <p>Daily Ads Watched: <strong id="dailyAdsWatched">0</strong></p>
         <p>Tasks Completed: <strong id="tasksCompleted">0</strong></p>
         <button class="btn" onclick="logout()">Logout</button>
       </div>
@@ -218,21 +219,22 @@
       <div class="card">
         <h3>Watch Ads</h3>
         <button class="btn" onclick="watchAd()">Watch Ad & Earn</button>
+        <p style="margin-top: 10px; font-weight: bold; text-align: center;">Daily Ads: <strong id="dailyAdsWatchedEarn">0</strong></p>
         <p class="info" id="ad-status">Click the button to watch ad</p>
+        <p class="info" id="ad-target-message" style="color:orange;"></p>
       </div>
       <div class="card">
         <h3>Tasks</h3>
-        <button class="btn" onclick="taskWithRedirect('https://t.me/Hridoy_Skill', 'Join Telegram')">Join Telegram</button>
-        <button class="btn" onclick="taskWithRedirect('https://youtube.com/@hridoy_skill_0.69?si=GfXezqZBlqsXYWVc', 'Subscribe YouTube')">Subscribe YouTube</button>
-        <button class="btn" onclick="taskWithRedirect('https://www.facebook.com/Hridoy.tudu.69', 'Like Facebook Page')">Like Facebook Page</button>
-        <button class="btn" onclick="taskWithRedirect('https://instagram.com', 'Follow Instagram')">Follow Instagram</button>
-        <button class="btn" onclick="taskWithRedirect('https://youtu.be/Nqg8N0_RY_g?si=QFzA-UZbj6YxkIF9', 'Share Post')">Share Post</button>
+        <button class="btn" onclick="taskWithRedirect('https://t.me/Hridoy_Skill')">Join Telegram</button>
+        <button class="btn" onclick="taskWithRedirect('https://youtube.com/@hridoy_skill_0.69?si=GfXezqZBlqsXYWVc')">Subscribe YouTube</button>
+        <button class="btn" onclick="taskWithRedirect('https://www.facebook.com/Hridoy.tudu.69')">Like Facebook Page</button>
+        <button class="btn" onclick="taskWithRedirect('https://instagram.com')">Follow Instagram</button>
+        <button class="btn" onclick="taskWithRedirect('https://youtu.be/Nqg8N0_RY_g?si=QFzA-UZbj6YxkIF9')">Share Post</button>
 
         <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
 
         <h4>Add Screenshots for Task Completion</h4>
         <input type="text" id="screenshotName" placeholder="Enter Your Name (for verification)">
-        <input type="text" id="taskNameInput" placeholder="Enter Completed Task Name (e.g., Join Telegram)">
         <input type="file" id="screenshotUpload" accept="image/*">
         <button class="btn" onclick="submitScreenshot()">Submit Screenshot</button>
         <p class="info" id="screenshot-status"></p>
@@ -242,8 +244,6 @@
     <div id="withdraw" class="section">
       <div class="card">
         <h3>Withdraw</h3>
-        <p>Minimum Withdraw: <strong id="minWithdraw">$0.50</strong></p>
-        <p>Maximum Withdraw: <strong id="maxWithdraw">$2.00</strong></p>
         <input id="withdrawAmount" type="text" placeholder="Enter Amount">
         <input id="withdrawMethod" type="text" placeholder="Payment Method or Account">
         <button class="btn" onclick="submitWithdraw()">Submit Request</button>
@@ -263,6 +263,7 @@
       <div class="card">
         <h3>Profile</h3>
         <p>Total Ads: <strong id="adsWatchedProfile">0</strong></p>
+        <p>Daily Ads: <strong id="dailyAdsWatchedProfile">0</strong></p>
         <p>Total Tasks: <strong id="tasksCompletedProfile">0</strong></p>
         <p>Total Withdraw: <strong id="withdrawTotal">$0.00</strong></p>
         <p style="margin-top:10px;color:#888;">❤️Developer:Hridoy Skill❤️</p>
@@ -285,9 +286,6 @@
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgvHsPuW9s8I';
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
 
-  const MIN_WITHDRAW = 0.50; // Minimum withdrawal amount
-  const MAX_WITHDRAW = 2.00; // Maximum withdrawal amount
-
   let currentUser = null; // Stores the currently logged-in user's name
   let users = JSON.parse(localStorage.getItem('users')) || {}; // Stores all user data from localStorage
 
@@ -300,6 +298,8 @@
       users[currentUser] = {
         balance: parseFloat(document.getElementById('balance').innerText.replace('$', '')),
         adsWatched: parseInt(document.getElementById('adsWatched').innerText),
+        dailyAdsWatched: parseInt(document.getElementById('dailyAdsWatched').innerText),
+        lastAdResetDate: users[currentUser].lastAdResetDate, // Keep the existing reset date
         tasksCompleted: parseInt(document.getElementById('tasksCompleted').innerText),
         totalWithdraw: parseFloat(document.getElementById('withdrawTotal').innerText.replace('$', ''))
       };
@@ -320,10 +320,25 @@
       document.getElementById("adsWatched").innerText = userData.adsWatched;
       document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
       document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+      
+      // Handle daily ad reset
+      const now = new Date().getTime();
+      const lastReset = userData.lastAdResetDate ? new Date(userData.lastAdResetDate).getTime() : 0;
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+
+      if (now - lastReset >= twentyFourHours) {
+        users[username].dailyAdsWatched = 0;
+        users[username].lastAdResetDate = new Date().toISOString(); // Set new reset date
+      }
+      document.getElementById("dailyAdsWatched").innerText = users[username].dailyAdsWatched;
+      document.getElementById("dailyAdsWatchedEarn").innerText = users[username].dailyAdsWatched; // Update for earn section
+
     } else {
       // Initialize new user with default values
       document.getElementById("balance").innerText = `$0.000`;
       document.getElementById("adsWatched").innerText = 0;
+      document.getElementById("dailyAdsWatched").innerText = 0;
+      document.getElementById("dailyAdsWatchedEarn").innerText = 0; // Initialize for earn section
       document.getElementById("tasksCompleted").innerText = 0;
       document.getElementById("withdrawTotal").innerText = `$0.000`;
     }
@@ -348,6 +363,8 @@
       users[currentUser] = {
         balance: 0.000,
         adsWatched: 0,
+        dailyAdsWatched: 0,
+        lastAdResetDate: new Date().toISOString(), // Initialize with current time for new users
         tasksCompleted: 0,
         totalWithdraw: 0.000
       };
@@ -416,6 +433,8 @@
    */
   function watchAd() {
     const status = document.getElementById("ad-status");
+    const adTargetMessage = document.getElementById("ad-target-message");
+
     // Check if the external ad SDK function is available
     if (typeof show_9506403 === "function") {
       show_9506403(); // Call the external ad display function
@@ -433,24 +452,52 @@
       } else {
         clearInterval(timer);
         users[currentUser].balance += 0.005; // Award earnings
-        users[currentUser].adsWatched++; // Increment ad count
+        users[currentUser].adsWatched++; // Increment total ad count
+        users[currentUser].dailyAdsWatched++; // Increment daily ad count
+        users[currentUser].lastAdResetDate = new Date().toISOString(); // Update last ad watch time for daily reset
         updateStatsDisplay(); // Update UI display
         status.innerText = `Earned $0.005!`;
         saveUserData(); // Save updated user data
+
+        if (users[currentUser].adsWatched < 100) {
+            adTargetMessage.innerText = `You need to watch ${100 - users[currentUser].adsWatched} more ads to reach the 100 ads target.`;
+        } else {
+            adTargetMessage.innerText = `Great! You have watched ${users[currentUser].adsWatched} ads.`;
+        }
       }
     }, 1000);
   }
 
   /**
-   * Handles task completion with a redirect.
-   * Now, it only opens the URL and prompts the user to submit a screenshot.
+   * Handles task completion with a redirect, simulating a delay before awarding.
    * @param {string} url - The URL to redirect the user to for the task.
-   * @param {string} taskName - The name of the task being performed.
    */
-  function taskWithRedirect(url, taskName) {
+  function taskWithRedirect(url) {
+    // Check if it's a YouTube URL and use the YouTube tool if applicable
+    if (url.startsWith('http://googleusercontent.com/youtube.com/')) {
+        const videoId = url.split('/').pop();
+        // Assuming you want to search or get metadata for the video
+        // This part needs to be handled by the backend if you want to use the actual YouTube API
+        // For client-side, we'll just open the URL.
+        console.log(`Attempting to open YouTube video with ID: ${videoId}`);
+        // You can replace this with a call to your backend if you have one that uses the YouTube API
+        // For now, we'll just open the URL as it is provided in the HTML.
+    }
     window.open(url, '_blank'); // Open URL in a new tab
-    alert(`Please complete the "${taskName}" task and then submit a screenshot in the section below.`);
-    document.getElementById('taskNameInput').value = taskName; // Pre-fill task name for convenience
+    
+    // Simulate task completion delay
+    let wait = 15; // seconds
+    let countdown = setInterval(() => {
+      wait--;
+      if (wait <= 0) {
+        clearInterval(countdown);
+        users[currentUser].balance += 0.005; // Award earnings
+        users[currentUser].tasksCompleted++; // Increment task count
+        updateStatsDisplay(); // Update UI display
+        alert("Task complete! $0.005 has been added to your balance.");
+        saveUserData(); // Save updated user data
+      }
+    }, 1000);
   }
 
   /**
@@ -458,12 +505,11 @@
    */
   async function submitScreenshot() {
     const userNameInput = document.getElementById("screenshotName").value.trim();
-    const taskNameInput = document.getElementById("taskNameInput").value.trim(); // Get task name
     const screenshotFile = document.getElementById("screenshotUpload").files;
     const screenshotStatus = document.getElementById("screenshot-status");
 
-    if (!userNameInput || !taskNameInput || screenshotFile.length === 0) {
-      alert("Please enter your name for verification, the task name, and select a screenshot image.");
+    if (!userNameInput || screenshotFile.length === 0) {
+      alert("Please enter your name for verification and select a screenshot image.");
       return;
     }
     // Ensure the name entered matches the logged-in user for verification
@@ -474,7 +520,7 @@
 
     const formData = new FormData();
     formData.append('chat_id', TELEGRAM_CHAT_ID);
-    formData.append('caption', `New task screenshot submitted:\nUser: ${currentUser}\nName on screenshot: ${userNameInput}\nTask Completed: ${taskNameInput}`);
+    formData.append('caption', `New task screenshot submitted:\nUser: ${currentUser}\nName on screenshot: ${userNameInput}`);
     formData.append('photo', screenshotFile[0]); // Upload only the first selected file
 
     screenshotStatus.innerText = "Sending screenshot...";
@@ -499,10 +545,9 @@
             users[currentUser].balance += 0.005; // Award earnings after "verification"
             users[currentUser].tasksCompleted++; // Increment task count
             updateStatsDisplay(); // Update UI display
-            screenshotStatus.innerText = `Verification complete! $0.005 added to your balance for "${taskNameInput}".`;
+            screenshotStatus.innerText = `Verification complete! $0.005 added to your balance.`;
             // Clear input fields after successful submission and award
             document.getElementById("screenshotName").value = '';
-            document.getElementById("taskNameInput").value = ''; // Clear task name input
             document.getElementById("screenshotUpload").value = '';
             saveUserData(); // Save updated user data
           }
@@ -525,6 +570,8 @@
     const userData = users[currentUser];
     document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
     document.getElementById("adsWatched").innerText = userData.adsWatched;
+    document.getElementById("dailyAdsWatched").innerText = userData.dailyAdsWatched; // Update daily ads for dashboard
+    document.getElementById("dailyAdsWatchedEarn").innerText = userData.dailyAdsWatched; // Update daily ads for earn section
     document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
     // Withdraw total is updated by updateProfileStats, which is called after this.
     updateProfileStats(); // Ensure profile section is also updated
@@ -536,8 +583,16 @@
   function updateProfileStats() {
     const userData = users[currentUser];
     document.getElementById("adsWatchedProfile").innerText = userData.adsWatched;
+    document.getElementById("dailyAdsWatchedProfile").innerText = userData.dailyAdsWatched; // Update daily ads in profile
     document.getElementById("tasksCompletedProfile").innerText = userData.tasksCompleted;
     document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+
+    const adTargetMessage = document.getElementById("ad-target-message");
+    if (users[currentUser].adsWatched < 100) {
+        adTargetMessage.innerText = `You need to watch ${100 - users[currentUser].adsWatched} more ads to reach the 100 ads target.`;
+    } else {
+        adTargetMessage.innerText = `Great! You have watched ${users[currentUser].adsWatched} ads.`;
+    }
   }
 
   /**
@@ -547,28 +602,8 @@
     const amount = parseFloat(document.getElementById("withdrawAmount").value);
     const method = document.getElementById("withdrawMethod").value;
 
-    if (isNaN(amount) || !method) {
-      alert("Please fill all fields correctly.");
-      return;
-    }
-
-    if (amount <= 0) {
-      alert("Withdrawal amount must be greater than zero.");
-      return;
-    }
-
-    if (amount < MIN_WITHDRAW) {
-      alert(`Minimum withdrawal amount is $${MIN_WITHDRAW.toFixed(2)}.`);
-      return;
-    }
-
-    if (amount > MAX_WITHDRAW) {
-      alert(`Maximum withdrawal amount is $${MAX_WITHDRAW.toFixed(2)}.`);
-      return;
-    }
-
-    if (amount > users[currentUser].balance) {
-      alert("Insufficient balance for this withdrawal amount.");
+    if (!amount || !method || amount > users[currentUser].balance || amount <= 0) {
+      alert("Please fill all fields correctly, and ensure the amount is valid and less than or equal to your balance.");
       return;
     }
 
@@ -592,7 +627,7 @@
         document.getElementById("withdrawMethod").value = '';
         saveUserData(); // Save updated user data
       } else {
-        alert("Failed to send withdraw request. Please try again. Error: " + (result.description || "Unknown"));
+        alert("Failed to send withdraw request. Please try again. Error: " + (result.description || "Unknown");
         console.error("Telegram API error:", result);
       }
     } catch (error) {
