@@ -233,6 +233,8 @@
         <button class="btn" onclick="taskWithRedirect('https://www.facebook.com/Hridoy.tudu.69')">Like Facebook Page</button>
         <button class="btn" onclick="taskWithRedirect('https://instagram.com')">Follow Instagram</button>
         <button class="btn" onclick="taskWithRedirect('https://youtu.be/Nqg8N0_RY_g?si=QFzA-UZbj6YxkIF9')">Share Post</button>
+        
+        <button class="btn" onclick="showReferralLink()">Refer & Earn</button>
 
         <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
 
@@ -530,6 +532,18 @@
     }
     window.open(url, '_blank'); // Open URL in a new tab
     alert("Task opened. Please complete the task and submit a screenshot for verification to earn!");
+  }
+
+  /**
+   * Displays the user's unique Telegram referral link.
+   */
+  function showReferralLink() {
+      if (currentUser) {
+          const referralLink = `https://t.me/RealEarnBD62_bot?start=ref_${currentUser}`;
+          alert(`আপনার রেফারেল লিঙ্ক:\n\n${referralLink}\n\nএই লিঙ্কটি শেয়ার করে আরও বেশি ইনকাম করুন!`);
+      } else {
+          alert("রেফারেল লিঙ্ক দেখতে অনুগ্রহ করে প্রথমে লগইন করুন।");
+      }
   }
 
   /**
