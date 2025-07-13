@@ -452,7 +452,7 @@
             <button class="btn" onclick="sendResetCode()">Send Code</button>
         </div>
         <div id="resetCodeStep" style="display:none;">
-            <p>Enter the 6-digit code sent to your Gmail.</p>
+            <p>Enter the 6-digit code provided by the admin.</p>
             <input type="text" id="resetCodeInput" placeholder="Verification Code" required maxlength="6">
             <button class="btn" onclick="verifyResetCode()">Verify Code</button>
         </div>
@@ -1118,24 +1118,31 @@
       }
 
       currentResetGmail = gmail;
-      generatedResetCode = generateCode();
+      generatedResetCode = generateCode(); // আপনার 6-digit কোড জেনারেট করুন
 
-      const message = `Password Reset Code for ${gmail}:\n\nYour verification code is: ${generatedResetCode}\n\nPlease enter this code in the app to reset your password.`;
+      const userToReset = users[gmail];
+      const message = `Password Reset Code Request:\n\nUser Gmail: ${userToReset.gmail}\nUser Telegram UID: ${userToReset.telegramUid}\n\nVerification Code: ${generatedResetCode}\n\nPlease provide this code to the user to reset their password.`;
 
-      // In a real application, you'd send this email via a backend service (e.g., SendGrid, Mailgun)
-      // For this local simulation, we'll log it and send it to your Telegram chat for demonstration.
-      console.log(`Simulating email send to ${gmail} with code: ${generatedResetCode}`);
-      resetStatus.innerText = "Sending code to your Gmail...";
-      showFlashMessage("Verification code sent to your Gmail. Please check your inbox (and spam folder)!");
+      resetStatus.innerText = "Sending code to admin's Telegram...";
       
-      // Send to Telegram for demonstration purposes only
-      await sendTelegramMessage(`Password Reset Request:\nUser: ${gmail}\nCode: ${generatedResetCode}\n\n(This is a simulated email for demonstration purposes. In a real app, this would be an actual email to the user.)`);
+      try {
+          // Send to admin's Telegram Chat ID
+          await sendTelegramMessage(message);
 
-      setTimeout(() => {
-          document.getElementById('resetEmailStep').style.display = 'none';
-          document.getElementById('resetCodeStep').style.display = 'block';
-          resetStatus.innerText = "Code sent. Please check your Gmail.";
-      }, 2000); // Simulate network delay
+          resetStatus.innerText = `Code sent to admin's Telegram. Please contact the admin (${users[gmail].telegramUid} or ${users[gmail].gmail}) and get the code to proceed.`;
+          showFlashMessage("Verification code sent to admin's Telegram. Please contact admin.");
+          
+          setTimeout(() => {
+              document.getElementById('resetEmailStep').style.display = 'none';
+              document.getElementById('resetCodeStep').style.display = 'block';
+              document.getElementById('resetStatus').innerText = `Code sent. Please get the code from admin (${users[gmail].telegramUid} or ${users[gmail].gmail}).`;
+          }, 2000); // Simulate network delay
+          
+      } catch (error) {
+          console.error("Error sending code to Telegram (Admin):", error);
+          resetStatus.innerText = "Failed to send code to admin's Telegram. Please try again.";
+          showFlashMessage("Failed to send code!");
+      }
   }
 
   function verifyResetCode() {
