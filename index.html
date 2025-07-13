@@ -338,6 +338,7 @@
       <input type="text" id="loginUsername" placeholder="Gmail or 10-digit Telegram User ID" required>
       <input type="password" id="loginPassword" placeholder="Password" required>
       <button class="btn" onclick="handleLogin()">Login</button>
+      <button class="btn" onclick="showResetPasswordModal()">Reset Password</button>
     </div>
   </div>
 
@@ -441,6 +442,31 @@
   </div>
 </div>
 
+<div id="resetPasswordModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeResetPasswordModal()">×</span>
+        <h3>Reset Password</h3>
+        <div id="resetEmailStep">
+            <p>Enter your registered Gmail to receive a verification code.</p>
+            <input type="email" id="resetGmailInput" placeholder="Your Gmail Address" required>
+            <button class="btn" onclick="sendResetCode()">Send Code</button>
+        </div>
+        <div id="resetCodeStep" style="display:none;">
+            <p>Enter the 6-digit code sent to your Gmail.</p>
+            <input type="text" id="resetCodeInput" placeholder="Verification Code" required maxlength="6">
+            <button class="btn" onclick="verifyResetCode()">Verify Code</button>
+        </div>
+        <div id="resetNewPasswordStep" style="display:none;">
+            <p>Enter your new password.</p>
+            <input type="password" id="newPasswordInput" placeholder="New Password" required>
+            <input type="password" id="confirmNewPasswordInput" placeholder="Confirm New Password" required>
+            <button class="btn" onclick="setNewPassword()">Set New Password</button>
+        </div>
+        <p class="info" id="resetStatus" style="color:red;"></p>
+    </div>
+</div>
+
+
 <div id="flashMessage" class="flash-message"></div>
 
 <script src="//libtl.com/sdk.js" data-zone="9506403" data-sdk="show_9506403"></script>
@@ -448,13 +474,16 @@
 <script>
   // Telegram Bot Credentials (Replace with your actual bot token and chat ID)
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgjHsPuW9s8I'; // Replace with your bot token
-  const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages
+  const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages (for admin notifications)
 
   let currentUserEmail = null; // Stores the currently logged-in user's Gmail
   // `users` is now an object where keys are Gmails and values are user objects
   let users = JSON.parse(localStorage.getItem('users')) || {}; 
 
-  let referrerEmail = null; // Stores the potential referrer's Gmail
+  let referrerUID = null; // Stores the potential referrer's UID
+
+  let currentResetGmail = null; // Stores the Gmail for the password reset process
+  let generatedResetCode = null; // Stores the generated code for password reset
 
   /**
    * Parses URL parameters.
@@ -589,15 +618,27 @@
       referredUsers: []
     };
 
-    // If there's a referrer, apply referral bonus
-    if (referrerEmail && referrerEmail !== gmail && users[referrerEmail]) {
-        users[gmail].referredBy = referrerEmail;
-        users[referrerEmail].balance += 0.020; // Referrer gets $0.020
-        users[referrerEmail].totalReferrals++;
-        users[referrerEmail].referredUsers.push(gmail);
-        sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nReferred by: ${referrerEmail}\nReferral bonus paid to ${referrerEmail}`);
+    // If there's a referrer (by UID), apply referral bonus
+    if (referrerUID && telegramUid !== referrerUID) {
+        let referrerEmailFound = null;
+        for (const email in users) {
+            if (users[email].telegramUid === referrerUID) {
+                referrerEmailFound = email;
+                break;
+            }
+        }
+
+        if (referrerEmailFound && users[referrerEmailFound]) {
+            users[gmail].referredBy = referrerUID; // Store the referrer's UID
+            users[referrerEmailFound].balance += 0.020; // Referrer gets $0.020
+            users[referrerEmailFound].totalReferrals++;
+            users[referrerEmailFound].referredUsers.push(gmail); // Store referred user's Gmail
+            sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nReferred by: ${referrerEmailFound} (UID: ${referrerUID})\nReferral bonus paid to ${referrerEmailFound}`);
+        } else {
+            sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nReferrer UID (${referrerUID}) not found or invalid.`);
+        }
     } else {
-        sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nNo referrer.`);
+        sendTelegramMessage(`New user registered: ${gmail} (UID: ${telegramUid})\nNo valid referrer UID.`);
     }
 
     saveUserData();
@@ -677,13 +718,14 @@
    * Checks if a user was previously logged in on page load and restores the session.
    */
   function checkLoginStatus() {
-    referrerEmail = getUrlParameter('ref'); // Referral link will pass Gmail
-    if (referrerEmail) {
-        referrerEmail = decodeURIComponent(referrerEmail).toLowerCase(); // Decode and normalize
-        console.log(`Potential referrer Email found in URL: ${referrerEmail}`);
-        sessionStorage.setItem('tempReferrerEmail', referrerEmail);
+    // Check for referrer UID in URL
+    const refParam = getUrlParameter('ref');
+    if (refParam && refParam.length === 10 && !isNaN(refParam)) { // Ensure it's a 10-digit number
+        referrerUID = decodeURIComponent(refParam);
+        console.log(`Potential referrer UID found in URL: ${referrerUID}`);
+        sessionStorage.setItem('tempReferrerUID', referrerUID); // Store temporarily
     } else {
-        referrerEmail = sessionStorage.getItem('tempReferrerEmail');
+        referrerUID = sessionStorage.getItem('tempReferrerUID');
     }
 
     const loggedInUser = localStorage.getItem('loggedInUser');
@@ -797,16 +839,16 @@
   }
 
   /**
-   * Displays the referral modal with the user's unique Gmail referral link.
+   * Displays the referral modal with the user's unique UID referral link.
    */
   function showReferralLink() {
-      if (currentUserEmail) {
-          const referralLink = `https://t.me/RealEarnBD62_bot?startapp=ref_${encodeURIComponent(currentUserEmail)}`;
+      if (currentUserEmail && users[currentUserEmail] && users[currentUserEmail].telegramUid) {
+          const referralLink = `https://t.me/RealEarnBD62_bot?startapp=ref_${encodeURIComponent(users[currentUserEmail].telegramUid)}`;
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex';
           document.getElementById('copyStatus').innerText = '';
       } else {
-          showFlashMessage("Please log in first to see the referral link.");
+          showFlashMessage("Please log in and ensure your Telegram User ID is set to generate a referral link.");
       }
   }
 
@@ -1037,7 +1079,110 @@
     document.body.classList.toggle('dark');
   }
 
-  // Event listener for when the page finishes loading
+  // --- Password Reset Logic ---
+
+  function showResetPasswordModal() {
+      document.getElementById('resetPasswordModal').style.display = 'flex';
+      document.getElementById('resetEmailStep').style.display = 'block';
+      document.getElementById('resetCodeStep').style.display = 'none';
+      document.getElementById('resetNewPasswordStep').style.display = 'none';
+      document.getElementById('resetStatus').innerText = '';
+      document.getElementById('resetGmailInput').value = '';
+      document.getElementById('resetCodeInput').value = '';
+      document.getElementById('newPasswordInput').value = '';
+      document.getElementById('confirmNewPasswordInput').value = '';
+      currentResetGmail = null;
+      generatedResetCode = null;
+  }
+
+  function closeResetPasswordModal() {
+      document.getElementById('resetPasswordModal').style.display = 'none';
+  }
+
+  function generateCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+  }
+
+  async function sendResetCode() {
+      const gmail = document.getElementById('resetGmailInput').value.trim().toLowerCase();
+      const resetStatus = document.getElementById('resetStatus');
+
+      if (!isValidGmail(gmail)) {
+          resetStatus.innerText = "Please enter a valid Gmail address.";
+          return;
+      }
+
+      if (!users[gmail]) {
+          resetStatus.innerText = "This Gmail is not registered. Please register first.";
+          return;
+      }
+
+      currentResetGmail = gmail;
+      generatedResetCode = generateCode();
+
+      const message = `Password Reset Code for ${gmail}:\n\nYour verification code is: ${generatedResetCode}\n\nPlease enter this code in the app to reset your password.`;
+
+      // In a real application, you'd send this email via a backend service (e.g., SendGrid, Mailgun)
+      // For this local simulation, we'll log it and send it to your Telegram chat for demonstration.
+      console.log(`Simulating email send to ${gmail} with code: ${generatedResetCode}`);
+      resetStatus.innerText = "Sending code to your Gmail...";
+      showFlashMessage("Verification code sent to your Gmail. Please check your inbox (and spam folder)!");
+      
+      // Send to Telegram for demonstration purposes only
+      await sendTelegramMessage(`Password Reset Request:\nUser: ${gmail}\nCode: ${generatedResetCode}\n\n(This is a simulated email for demonstration purposes. In a real app, this would be an actual email to the user.)`);
+
+      setTimeout(() => {
+          document.getElementById('resetEmailStep').style.display = 'none';
+          document.getElementById('resetCodeStep').style.display = 'block';
+          resetStatus.innerText = "Code sent. Please check your Gmail.";
+      }, 2000); // Simulate network delay
+  }
+
+  function verifyResetCode() {
+      const enteredCode = document.getElementById('resetCodeInput').value.trim();
+      const resetStatus = document.getElementById('resetStatus');
+
+      if (enteredCode === generatedResetCode) {
+          document.getElementById('resetCodeStep').style.display = 'none';
+          document.getElementById('resetNewPasswordStep').style.display = 'block';
+          resetStatus.innerText = "";
+          showFlashMessage("Code verified. Please set your new password.");
+      } else {
+          resetStatus.innerText = "Invalid code. Please try again.";
+      }
+  }
+
+  function setNewPassword() {
+      const newPassword = document.getElementById('newPasswordInput').value;
+      const confirmNewPassword = document.getElementById('confirmNewPasswordInput').value;
+      const resetStatus = document.getElementById('resetStatus');
+
+      if (!newPassword || newPassword.length < 6) {
+          resetStatus.innerText = "Password must be at least 6 characters long.";
+          return;
+      }
+      if (newPassword !== confirmNewPassword) {
+          resetStatus.innerText = "Passwords do not match.";
+          return;
+      }
+
+      if (currentResetGmail && users[currentResetGmail]) {
+          users[currentResetGmail].password = newPassword;
+          saveUserData();
+          showFlashMessage("Password successfully reset! You can now log in with your new password.");
+          closeResetPasswordModal();
+          showAuthTab('login'); // Redirect to login
+          // Clear current login input for a fresh start
+          document.getElementById('loginUsername').value = currentResetGmail;
+          document.getElementById('loginPassword').value = '';
+          currentResetGmail = null;
+          generatedResetCode = null;
+      } else {
+          resetStatus.innerText = "An error occurred. Please restart the password reset process.";
+      }
+  }
+
+  // Initial check on load
   window.onload = checkLoginStatus;
 </script>
 </body>
