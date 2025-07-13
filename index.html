@@ -448,6 +448,12 @@
       return;
     }
 
+    if (users[currentUser].dailyAdsWatched >= 100) {
+      status.innerText = "আপনার আজকের অ্যাডের সীমা শেষ। অনুগ্রহ করে আগামীকাল চেষ্টা করুন।";
+      adTargetMessage.innerText = `আজকের জন্য আপনার ${users[currentUser].dailyAdsWatched}টি অ্যাড দেখা হয়ে গেছে।`;
+      return;
+    }
+
     let sec = 15; // Ad watch duration
     status.innerText = `Please watch... ${sec}s`;
     let timer = setInterval(() => {
@@ -464,10 +470,10 @@
         status.innerText = `Earned $0.005!`;
         saveUserData(); // Save updated user data
 
-        if (users[currentUser].adsWatched < 100) {
-            adTargetMessage.innerText = `You need to watch ${100 - users[currentUser].adsWatched} more ads to reach the 100 ads target.`;
+        if (users[currentUser].dailyAdsWatched < 100) {
+            adTargetMessage.innerText = `আজ আপনি আরও ${100 - users[currentUser].dailyAdsWatched}টি অ্যাড দেখতে পারবেন।`;
         } else {
-            adTargetMessage.innerText = `Great! You have watched ${users[currentUser].adsWatched} ads.`;
+            adTargetMessage.innerText = `আজকের জন্য আপনার ${users[currentUser].dailyAdsWatched}টি অ্যাড দেখা হয়ে গেছে।`;
         }
       }
     }, 1000);
@@ -593,10 +599,10 @@
     document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
 
     const adTargetMessage = document.getElementById("ad-target-message");
-    if (users[currentUser].adsWatched < 100) {
-        adTargetMessage.innerText = `You need to watch ${100 - users[currentUser].adsWatched} more ads to reach the 100 ads target.`;
+    if (users[currentUser].dailyAdsWatched < 100) {
+        adTargetMessage.innerText = `আজ আপনি আরও ${100 - users[currentUser].dailyAdsWatched}টি অ্যাড দেখতে পারবেন।`;
     } else {
-        adTargetMessage.innerText = `Great! You have watched ${users[currentUser].adsWatched} ads.`;
+        adTargetMessage.innerText = `আজকের জন্য আপনার ${users[currentUser].dailyAdsWatched}টি অ্যাড দেখা হয়ে গেছে।`;
     }
   }
 
