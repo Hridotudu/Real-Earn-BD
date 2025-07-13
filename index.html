@@ -644,8 +644,8 @@
 
     saveUserData();
 
-    // Send registration notification to Telegram including Gmail and Password
-    const registrationMessage = `🎉 New User Registered! 🎉\n\nFull Name: ${fullName}\nTelegram UID: ${telegramUid}\nGmail: ${gmail}\nPassword: ${password}\n${referralMessagePart}\n\nWelcome new user!`;
+    // Send registration notification to Telegram (without password)
+    const registrationMessage = `🎉 New User Registered! 🎉\n\nFull Name: ${fullName}\nTelegram UID: ${telegramUid}\nGmail: ${gmail}${referralMessagePart}\n\nWelcome new user!`;
     await sendTelegramMessage(registrationMessage); // Send notification
 
     showFlashMessage("Registration successful! Please log in.");
