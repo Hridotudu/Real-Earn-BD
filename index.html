@@ -642,7 +642,8 @@
       currentUserEmail = userEmailToLogin;
       localStorage.setItem('loggedInUser', currentUserEmail);
       loadUserData(currentUserEmail);
-      document.getElementById('usernameDisplay').innerText = `Welcome, ${users[currentUserEmail].fullName}! (${currentUserEmail})`;
+      // Update usernameDisplay to show Full Name and UID
+      document.getElementById('usernameDisplay').innerText = `Welcome, ${users[currentUserEmail].fullName}! (UID: ${users[currentUserEmail].telegramUid})`;
       document.getElementById('auth').style.display = 'none';
       document.getElementById('appSections').style.display = 'block';
       document.querySelector('nav').style.display = 'flex';
@@ -689,7 +690,8 @@
     if (loggedInUser && users[loggedInUser]) { // Check if user exists in our stored data
       currentUserEmail = loggedInUser;
       loadUserData(currentUserEmail);
-      document.getElementById('usernameDisplay').innerText = `Welcome, ${users[currentUserEmail].fullName}! (${currentUserEmail})`;
+      // Update usernameDisplay to show Full Name and UID
+      document.getElementById('usernameDisplay').innerText = `Welcome, ${users[currentUserEmail].fullName}! (UID: ${users[currentUserEmail].telegramUid})`;
       document.getElementById('auth').style.display = 'none';
       document.getElementById('appSections').style.display = 'block';
       document.querySelector('nav').style.display = 'flex';
