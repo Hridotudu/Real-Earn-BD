@@ -391,6 +391,7 @@
     <div id="withdraw" class="section">
       <div class="card">
         <h3>Withdraw</h3>
+        <p>Minimum: $0.50, Maximum: $2.00</p>
         <input id="withdrawAmount" type="text" placeholder="Enter Amount">
         <input id="withdrawMethod" type="text" placeholder="Payment Method or Account">
         <button class="btn" onclick="submitWithdraw()">Submit Request</button>
@@ -475,6 +476,10 @@
   // Telegram Bot Credentials (Replace with your actual bot token and chat ID)
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgjHsPuW9s8I'; // Replace with your bot token
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages (for admin notifications)
+
+  // Define withdrawal limits
+  const MIN_WITHDRAW = 0.50;
+  const MAX_WITHDRAW = 2.00;
 
   let currentUserEmail = null; // Stores the currently logged-in user's Gmail
   // `users` is now an object where keys are Gmails and values are user objects
@@ -620,12 +625,12 @@
       tasksCompleted: 0,
       totalWithdraw: 0.000,
       totalReferrals: 0,
-      referredUsers: []
+      referredUsers: [] // List of Gmails of users referred by this user
     };
 
     // If there's a referrer (by UID), apply referral bonus
     let referralMessagePart = "";
-    if (referrerUID && telegramUid !== referrerUID) {
+    if (referrerUID && telegramUid !== referrerUID) { // Ensure the new user is not referring themselves
         let referrerEmailFound = null;
         for (const email in users) {
             if (users[email].telegramUid === referrerUID) {
@@ -635,11 +640,12 @@
         }
 
         if (referrerEmailFound && users[referrerEmailFound]) {
-            users[gmail].referredBy = referrerUID; // Store the referrer's UID
+            users[gmail].referredBy = referrerUID; // Store the referrer's UID for the new user
             users[referrerEmailFound].balance += 0.020; // Referrer gets $0.020
-            users[referrerEmailFound].totalReferrals++;
-            users[referrerEmailFound].referredUsers.push(gmail); // Store referred user's Gmail
+            users[referrerEmailFound].totalReferrals++; // Increment referrer's totalReferrals
+            users[referrerEmailFound].referredUsers.push(gmail); // Add new user's Gmail to referrer's list
             referralMessagePart = `\nReferred by: ${users[referrerEmailFound].fullName} (UID: ${referrerUID})\nReferral bonus paid to referrer.`;
+            saveUserData(); // Save referrer's updated data immediately
         } else {
             referralMessagePart = `\nReferrer UID (${referrerUID}) not found or invalid.`;
         }
@@ -647,7 +653,7 @@
         referralMessagePart = `\nNo referrer.`;
     }
 
-    saveUserData();
+    saveUserData(); // Save new user's data (and referrer's if updated)
 
     // Send registration notification to Telegram (without password)
     const registrationMessage = `🎉 New User Registered! 🎉\n\nFull Name: ${fullName}\nTelegram UID: ${telegramUid}\nGmail: ${gmail}${referralMessagePart}\n\nWelcome new user!`;
@@ -854,7 +860,9 @@
    */
   function showReferralLink() {
       if (currentUserEmail && users[currentUserEmail] && users[currentUserEmail].telegramUid) {
-          const referralLink = `https://t.me/RealEarnBD62_bot?startapp=ref_${encodeURIComponent(users[currentUserEmail].telegramUid)}`;
+          // Construct referral link that points to your web app with the referrer's UID
+          const baseUrl = window.location.origin + window.location.pathname;
+          const referralLink = `${baseUrl}?ref=${encodeURIComponent(users[currentUserEmail].telegramUid)}`;
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex';
           document.getElementById('copyStatus').innerText = '';
@@ -1016,8 +1024,24 @@
     const method = document.getElementById("withdrawMethod").value;
     const userData = users[currentUserEmail];
 
-    if (!amount || !method || amount > userData.balance || amount <= 0) {
-      showFlashMessage("Please fill all fields correctly, and ensure the amount is valid and less than or equal to your balance.");
+    if (!amount || !method) {
+      showFlashMessage("Please fill all fields correctly.");
+      return;
+    }
+    if (amount <= 0) {
+        showFlashMessage("Withdrawal amount must be greater than zero.");
+        return;
+    }
+    if (amount < MIN_WITHDRAW) {
+        showFlashMessage(`Minimum withdrawal amount is $${MIN_WITHDRAW.toFixed(2)}.`);
+        return;
+    }
+    if (amount > MAX_WITHDRAW) {
+        showFlashMessage(`Maximum withdrawal amount is $${MAX_WITHDRAW.toFixed(2)}.`);
+        return;
+    }
+    if (amount > userData.balance) {
+      showFlashMessage("Insufficient balance. You cannot withdraw more than your current balance.");
       return;
     }
 
@@ -1032,13 +1056,13 @@
 
       const result = await response.json();
       if (result.ok) {
-        userData.balance = 0; // Reset balance after withdrawal request
+        userData.balance -= amount; // Deduct withdrawn amount from balance
         userData.totalWithdraw += amount; // Add to total withdrawn amount
         userData.totalReferrals = 0; // Reset total referrals after withdrawal
         userData.referredUsers = []; // Clear the list of referred users
         
         updateStatsDisplay();
-        showFlashMessage("Withdraw request sent successfully! Your balance and referral count have been reset.");
+        showFlashMessage("Withdraw request sent successfully! Your balance has been updated and referral count reset.");
         document.getElementById("withdrawAmount").value = '';
         document.getElementById("withdrawMethod").value = '';
         saveUserData();
@@ -1175,8 +1199,8 @@
       const confirmNewPassword = document.getElementById('confirmNewPasswordInput').value;
       const resetStatus = document.getElementById('resetStatus');
 
-      if (!newPassword || newPassword.length < 6) { // This check should also be updated for 8 characters if consistent
-          resetStatus.innerText = "Password must be at least 6 characters long.";
+      if (!newPassword || newPassword.length < 8) { // Updated to enforce 8 character minimum for reset as well
+          resetStatus.innerText = "Password must be at least 8 characters long.";
           return;
       }
       if (newPassword !== confirmNewPassword) {
