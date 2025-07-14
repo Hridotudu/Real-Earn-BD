@@ -789,7 +789,7 @@
    */
   function checkLoginStatus() {
     // Check for referrer UID in URL
-    const refParam = getUrlParameter('start'); // Get 'start' parameter from Telegram bot URL
+    const refParam = getUrlParameter('startapp'); // Get 'startapp' parameter from Telegram bot URL
     if (refParam && refParam.startsWith('ref_') && refParam.length === 14 && !isNaN(refParam.substring(4))) { // e.g., 'ref_1234567890'
         referrerUID = decodeURIComponent(refParam.substring(4)); // Extract UID after 'ref_'
         console.log(`Potential referrer UID found in URL: ${referrerUID}`);
@@ -954,7 +954,7 @@
 
   /**
    * Displays the referral modal with the user's unique UID referral link
-   * directly to the Telegram bot with the 'start' parameter.
+   * directly to the Telegram bot with the 'startapp' parameter.
    */
   function showReferralLink() {
       if (currentUserEmail && users[currentUserEmail] && users[currentUserEmail].telegramUid) {
@@ -962,9 +962,9 @@
           const botUsername = TELEGRAM_BOT_USERNAME; 
           const referrerTelegramUid = users[currentUserEmail].telegramUid;
 
-          // Create the referral link with the Telegram bot's 'start' parameter
+          // Create the referral link with the Telegram bot's 'startapp' parameter
           // format: https://t.me/RealEarnBD62_bot?startapp=ref_YOUR_UID
-          const referralLink = `https://t.me/${RealEarnBD62}?startapp=ref_${encodeURIComponent(referrerTelegramUid)}`;
+          const referralLink = `https://t.me/${botUsername}?startapp=ref_${encodeURIComponent(referrerTelegramUid)}`;
           
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex';
