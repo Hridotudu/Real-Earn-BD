@@ -473,25 +473,30 @@
 <script src="//libtl.com/sdk.js" data-zone="9506403" data-sdk="show_9506403"></script>
 
 <script>
-  // Telegram Bot Credentials (Replace with your actual bot token and chat ID)
+  // --- Configuration Variables ---
   const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgjHsPuW9s8I'; // Replace with your bot token
   const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages (for admin notifications)
+  const TELEGRAM_BOT_USERNAME = 'RealEarnBD62_bot'; // Your Telegram bot's username
 
-  // Define withdrawal limits
-  const MIN_WITHDRAW = 0.50;
-  const MAX_WITHDRAW = 2.00;
+  const MIN_WITHDRAW = 0.50; // Minimum withdrawal amount
+  const MAX_WITHDRAW = 2.00; // Maximum withdrawal amount
 
+  // --- Global State Variables ---
   let currentUserEmail = null; // Stores the currently logged-in user's Gmail
   // `users` is now an object where keys are Gmails and values are user objects
   let users = JSON.parse(localStorage.getItem('users')) || {}; 
 
-  let referrerUID = null; // Stores the potential referrer's UID
+  let referrerUID = null; // Stores the potential referrer's UID obtained from URL
 
   let currentResetGmail = null; // Stores the Gmail for the password reset process
   let generatedResetCode = null; // Stores the generated code for password reset
 
+  // --- Utility Functions ---
+
   /**
    * Parses URL parameters.
+   * @param {string} name - The name of the URL parameter to retrieve.
+   * @returns {string} The value of the parameter, or an empty string if not found.
    */
   function getUrlParameter(name) {
       name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -502,6 +507,7 @@
 
   /**
    * Saves the current user's data to the global 'users' object and then to localStorage.
+   * This function should be called whenever user data (balance, stats, etc.) changes.
    */
   function saveUserData() {
     if (currentUserEmail && users[currentUserEmail]) {
@@ -567,6 +573,8 @@
 
   /**
    * Validates if the input is a valid Gmail address.
+   * @param {string} email - The email string to validate.
+   * @returns {boolean} True if valid Gmail, false otherwise.
    */
   function isValidGmail(email) {
       const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
@@ -574,9 +582,52 @@
   }
 
   /**
+   * Sends a message to the Telegram bot.
+   * @param {string} message - The text message to send.
+   */
+  async function sendTelegramMessage(message) {
+      try {
+          const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
+          });
+          const result = await response.json();
+          if (!result.ok) {
+              console.error("Failed to send Telegram message:", result.description);
+          }
+      } catch (error) {
+          console.error("Error sending Telegram message:", error);
+      }
+  }
+
+  /**
+   * Displays a flash message at the bottom of the screen.
+   * @param {string} message - The message to display.
+   * @param {number} [duration=3000] - The duration in milliseconds for the message to be visible.
+   */
+  function showFlashMessage(message, duration = 3000) {
+      const flashMessageDiv = document.getElementById('flashMessage');
+      flashMessageDiv.innerText = message;
+      flashMessageDiv.classList.add('show');
+      setTimeout(() => {
+          flashMessageDiv.classList.remove('show');
+      }, duration);
+  }
+
+  /**
+   * Toggles dark mode on and off.
+   */
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+  }
+
+  // --- Authentication Functions ---
+
+  /**
    * Handles user registration.
    */
-  async function handleRegister() { // Added async here
+  async function handleRegister() {
     const fullName = document.getElementById('registerFullName').value.trim();
     const telegramUid = document.getElementById('registerTelegramUid').value.trim();
     const gmail = document.getElementById('registerGmail').value.trim().toLowerCase();
@@ -594,7 +645,6 @@
       showFlashMessage("Please enter a valid Gmail address (e.g., yourname@gmail.com).");
       return;
     }
-    // New validation for password length
     if (password.length < 8) {
       showFlashMessage("Password must be at least 8 characters long.");
       return;
@@ -742,7 +792,7 @@
         console.log(`Potential referrer UID found in URL: ${referrerUID}`);
         sessionStorage.setItem('tempReferrerUID', referrerUID); // Store temporarily
     } else {
-        referrerUID = sessionStorage.getItem('tempReferrerUID');
+        referrerUID = sessionStorage.getItem('tempReferrerUID'); // Retrieve from session storage if not in URL
     }
 
     const loggedInUser = localStorage.getItem('loggedInUser');
@@ -782,6 +832,8 @@
       }
   }
 
+  // --- App Section & Stats Display Functions ---
+
   /**
    * Shows the selected main application tab and hides others.
    * @param {string} tabId - The ID of the tab to show (e.g., 'home', 'earn').
@@ -793,6 +845,48 @@
     }
     updateProfileStats();
   }
+
+  /**
+   * Updates the balance, ads watched, tasks completed, and referrals displays for the current user.
+   */
+  function updateStatsDisplay() {
+    const userData = users[currentUserEmail];
+    if (!userData) return; // Guard against no user logged in
+
+    document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
+    document.getElementById("adsWatched").innerText = userData.adsWatched;
+    document.getElementById("dailyAdsWatched").innerText = userData.dailyAdsWatched;
+    document.getElementById("dailyAdsWatchedEarn").innerText = userData.dailyAdsWatched;
+    document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
+    document.getElementById("totalReferrals").innerText = userData.totalReferrals;
+    updateProfileStats();
+  }
+
+  /**
+   * Updates the profile tab's specific statistics.
+   */
+  function updateProfileStats() {
+    const userData = users[currentUserEmail];
+    if (!userData) return; // Guard against no user logged in
+
+    document.getElementById("profileFullName").innerText = userData.fullName || 'N/A';
+    document.getElementById("profileTelegramUid").innerText = userData.telegramUid || 'N/A';
+    document.getElementById("profileGmail").innerText = userData.gmail || 'N/A';
+    document.getElementById("adsWatchedProfile").innerText = userData.adsWatched;
+    document.getElementById("dailyAdsWatchedProfile").innerText = userData.dailyAdsWatched;
+    document.getElementById("tasksCompletedProfile").innerText = userData.tasksCompleted;
+    document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
+    document.getElementById("totalReferralsProfile").innerText = userData.totalReferrals;
+
+    const adTargetMessage = document.getElementById("ad-target-message");
+    if (userData.dailyAdsWatched < 100) {
+        adTargetMessage.innerText = `You can watch ${100 - userData.dailyAdsWatched} more ads today.`;
+    } else {
+        adTargetMessage.innerText = `You have watched ${userData.dailyAdsWatched} ads for today.`;
+    }
+  }
+
+  // --- Core Application Features ---
 
   /**
    * Simulates watching an ad and awards balance.
@@ -860,9 +954,11 @@
    */
   function showReferralLink() {
       if (currentUserEmail && users[currentUserEmail] && users[currentUserEmail].telegramUid) {
-          // Construct referral link that points to your web app with the referrer's UID
-          const baseUrl = window.location.origin + window.location.pathname;
-          const referralLink = `${baseUrl}?ref=${encodeURIComponent(users[currentUserEmail].telegramUid)}`;
+          const referrerTelegramUid = users[currentUserEmail].telegramUid;
+
+          // Construct the Telegram bot's startapp parameter referral link
+          const referralLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=ref_${encodeURIComponent(referrerTelegramUid)}`;
+          
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex';
           document.getElementById('copyStatus').innerText = '';
@@ -975,46 +1071,6 @@
   }
 
   /**
-   * Updates the balance, ads watched, tasks completed, and referrals displays for the current user.
-   */
-  function updateStatsDisplay() {
-    const userData = users[currentUserEmail];
-    if (!userData) return; // Guard against no user logged in
-
-    document.getElementById("balance").innerText = `$${userData.balance.toFixed(3)}`;
-    document.getElementById("adsWatched").innerText = userData.adsWatched;
-    document.getElementById("dailyAdsWatched").innerText = userData.dailyAdsWatched;
-    document.getElementById("dailyAdsWatchedEarn").innerText = userData.dailyAdsWatched;
-    document.getElementById("tasksCompleted").innerText = userData.tasksCompleted;
-    document.getElementById("totalReferrals").innerText = userData.totalReferrals;
-    updateProfileStats();
-  }
-
-  /**
-   * Updates the profile tab's specific statistics.
-   */
-  function updateProfileStats() {
-    const userData = users[currentUserEmail];
-    if (!userData) return; // Guard against no user logged in
-
-    document.getElementById("profileFullName").innerText = userData.fullName || 'N/A';
-    document.getElementById("profileTelegramUid").innerText = userData.telegramUid || 'N/A';
-    document.getElementById("profileGmail").innerText = userData.gmail || 'N/A';
-    document.getElementById("adsWatchedProfile").innerText = userData.adsWatched;
-    document.getElementById("dailyAdsWatchedProfile").innerText = userData.dailyAdsWatched;
-    document.getElementById("tasksCompletedProfile").innerText = userData.tasksCompleted;
-    document.getElementById("withdrawTotal").innerText = `$${userData.totalWithdraw.toFixed(3)}`;
-    document.getElementById("totalReferralsProfile").innerText = userData.totalReferrals;
-
-    const adTargetMessage = document.getElementById("ad-target-message");
-    if (userData.dailyAdsWatched < 100) {
-        adTargetMessage.innerText = `You can watch ${100 - userData.dailyAdsWatched} more ads today.`;
-    } else {
-        adTargetMessage.innerText = `You have watched ${userData.dailyAdsWatched} ads for today.`;
-    }
-  }
-
-  /**
    * Handles user withdrawal requests, sends details to Telegram, resets balance, and resets referrals.
    */
   async function submitWithdraw() {
@@ -1074,44 +1130,6 @@
       console.error("Error submitting withdraw request:", error);
       showFlashMessage("An error occurred while submitting the withdraw request.");
     }
-  }
-
-  /**
-   * Sends a message to the Telegram bot.
-   */
-  async function sendTelegramMessage(message) {
-      try {
-          const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
-          });
-          const result = await response.json();
-          if (!result.ok) {
-              console.error("Failed to send Telegram message:", result.description);
-          }
-      } catch (error) {
-          console.error("Error sending Telegram message:", error);
-      }
-  }
-
-  /**
-   * Displays a flash message at the bottom of the screen.
-   */
-  function showFlashMessage(message, duration = 3000) {
-      const flashMessageDiv = document.getElementById('flashMessage');
-      flashMessageDiv.innerText = message;
-      flashMessageDiv.classList.add('show');
-      setTimeout(() => {
-          flashMessageDiv.classList.remove('show');
-      }, duration);
-  }
-
-  /**
-   * Toggles dark mode on and off.
-   */
-  function toggleDarkMode() {
-    document.body.classList.toggle('dark');
   }
 
   // --- Password Reset Logic ---
@@ -1224,7 +1242,7 @@
       }
   }
 
-  // Initial check on load
+  // --- Initialize App ---
   window.onload = checkLoginStatus;
 </script>
 </body>
