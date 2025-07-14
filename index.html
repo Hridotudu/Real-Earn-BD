@@ -474,9 +474,12 @@
 
 <script>
   // --- Configuration Variables ---
-  const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgjHsPuW9s8I'; // Replace with your bot token
-  const TELEGRAM_CHAT_ID = '5965219037'; // Your Telegram Chat ID to receive messages (for admin notifications)
-  const TELEGRAM_BOT_USERNAME = 'RealEarnBD62_bot'; // Your Telegram bot's username
+  // Replace with your Telegram bot token
+  const TELEGRAM_BOT_TOKEN = '7310981934:AAE05Bo05CBLadaTWPgZg79fgjHsPuW9s8I'; 
+  // Your Telegram Chat ID to receive admin notifications
+  const TELEGRAM_CHAT_ID = '5965219037'; 
+  // Your Telegram bot's username (without @)
+  const TELEGRAM_BOT_USERNAME = 'RealEarnBD62_bot'; 
 
   const MIN_WITHDRAW = 0.50; // Minimum withdrawal amount
   const MAX_WITHDRAW = 2.00; // Maximum withdrawal amount
@@ -786,9 +789,9 @@
    */
   function checkLoginStatus() {
     // Check for referrer UID in URL
-    const refParam = getUrlParameter('ref');
-    if (refParam && refParam.length === 10 && !isNaN(refParam)) { // Ensure it's a 10-digit number
-        referrerUID = decodeURIComponent(refParam);
+    const refParam = getUrlParameter('start'); // Get 'start' parameter from Telegram bot URL
+    if (refParam && refParam.startsWith('ref_') && refParam.length === 14 && !isNaN(refParam.substring(4))) { // e.g., 'ref_1234567890'
+        referrerUID = decodeURIComponent(refParam.substring(4)); // Extract UID after 'ref_'
         console.log(`Potential referrer UID found in URL: ${referrerUID}`);
         sessionStorage.setItem('tempReferrerUID', referrerUID); // Store temporarily
     } else {
@@ -950,14 +953,18 @@
   }
 
   /**
-   * Displays the referral modal with the user's unique UID referral link.
+   * Displays the referral modal with the user's unique UID referral link
+   * directly to the Telegram bot with the 'start' parameter.
    */
   function showReferralLink() {
       if (currentUserEmail && users[currentUserEmail] && users[currentUserEmail].telegramUid) {
+          // Ensure your Telegram bot's username is correct here
+          const botUsername = TELEGRAM_BOT_USERNAME; 
           const referrerTelegramUid = users[currentUserEmail].telegramUid;
 
-          // Construct the Telegram bot's startapp parameter referral link
-          const referralLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=ref_${encodeURIComponent(referrerTelegramUid)}`;
+          // Create the referral link with the Telegram bot's 'start' parameter
+          // format: https://t.me/your_bot_username?start=ref_YOUR_UID
+          const referralLink = `https://t.me/${RealEarnBD62}?startapp=ref_${encodeURIComponent(referrerTelegramUid)}`;
           
           document.getElementById('referralLinkInput').value = referralLink;
           document.getElementById('referralModal').style.display = 'flex';
@@ -1171,7 +1178,7 @@
       }
 
       currentResetGmail = gmail;
-      generatedResetCode = generateCode(); // আপনার 6-digit কোড জেনারেট করুন
+      generatedResetCode = generateCode(); // Generate your 6-digit code
 
       const userToReset = users[gmail];
       const message = `Password Reset Code Request:\n\nUser Gmail: ${userToReset.gmail}\nUser Telegram UID: ${userToReset.telegramUid}\n\nVerification Code: ${generatedResetCode}\n\nPlease provide this code to the user to reset their password.`;
@@ -1217,7 +1224,7 @@
       const confirmNewPassword = document.getElementById('confirmNewPasswordInput').value;
       const resetStatus = document.getElementById('resetStatus');
 
-      if (!newPassword || newPassword.length < 8) { // Updated to enforce 8 character minimum for reset as well
+      if (!newPassword || newPassword.length < 8) { // Enforce 8 character minimum for reset as well
           resetStatus.innerText = "Password must be at least 8 characters long.";
           return;
       }
